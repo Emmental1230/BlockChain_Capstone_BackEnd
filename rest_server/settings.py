@@ -40,7 +40,8 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework_swagger',
-    'member'
+    'member',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -51,7 +52,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
+
+
+CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:3000','http://localhost:3000']
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'rest_server.urls'
 
@@ -80,10 +86,11 @@ WSGI_APPLICATION = 'rest_server.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE'   : 'django.db.backends.mysql',
-        'NAME'     : 'caps_DB',
+        'NAME'     : 'caps_db',
         'USER'     : 'root',
-        'PASSWORD' : '1234',
-        'HOST'     : 'localHost',
+        'PASSWORD' : 'root',
+        'HOST'     : '',
+        'PORT'     : '',
         'OPTIONS'  : {'charset': 'utf8mb4'},
    'TEST': {
    'CHARSET'  : 'utf8mb4',
@@ -91,6 +98,8 @@ DATABASES = {
    }
     }
 }
+
+ALLOWED_HOSTS = ['example.kyonggi.kr', '101.101.218.36']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
