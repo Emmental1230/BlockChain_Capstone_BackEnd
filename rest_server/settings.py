@@ -40,7 +40,8 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework_swagger',
-    'member'
+    'member',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -51,7 +52,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
+
+
+#CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:3000','http://localhost:3000','127.0.0.1']
+#CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'rest_server.urls'
 
@@ -76,14 +82,21 @@ WSGI_APPLICATION = 'rest_server.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'mydatabase',
+    }
+}
+"""
 DATABASES = {
     'default': {
         'ENGINE'   : 'django.db.backends.mysql',
-        'NAME'     : 'caps_DB',
+        'NAME'     : 'caps_db',
         'USER'     : 'root',
-        'PASSWORD' : '1234',
-        'HOST'     : 'localHost',
+        'PASSWORD' : 'root',
+        'HOST'     : '',
+        'PORT'     : '',
         'OPTIONS'  : {'charset': 'utf8mb4'},
    'TEST': {
    'CHARSET'  : 'utf8mb4',
@@ -91,6 +104,9 @@ DATABASES = {
    }
     }
 }
+"""
+ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = ['example.kyonggi.kr', '101.101.218.36']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -122,7 +138,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False      #server시간 맞추기 위한 설정
 
 
 # Static files (CSS, JavaScript, Images)
@@ -134,3 +150,12 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
