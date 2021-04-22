@@ -14,7 +14,6 @@ def signup_request(request):
         data = JSONParser().parse(request)
         serializer = MemberSerializer(data=data)
         #if pk == 'temporaryKey':  
-                   #app사용자인지 확인
         if serializer.is_valid():       #입력 data들 포맷 일치 여부 확인
             serializer.save()
             return JsonResponse(serializer.data, status=201)
@@ -33,7 +32,7 @@ def member_list(request):
     elif request.method == 'POST':
         data = JSONParser().parse(request)
         serializer = MemberSerializer(data=data)
-        if pk == 'temporaryKey'         #app사용자인지 확인
+        #if pk == 'temporaryKey':         #app사용자인지 확인
         if serializer.is_valid():       #입력 data들 포맷 일치 여부 확인
             serializer.save()
             return JsonResponse(serializer.data, status=201)
