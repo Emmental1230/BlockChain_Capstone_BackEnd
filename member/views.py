@@ -45,7 +45,7 @@ def member(request, pk):
     """
     학생 수정
     """
-    obj = Member.objects.GET (pk=pk)
+    obj = Member.objects.get(stdnum=pk)
 
     if request.method == 'GET':
         serializer = MemberSerializer(obj)
