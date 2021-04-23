@@ -83,7 +83,7 @@ WSGI_APPLICATION = 'rest_server.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 #DB sqlite3에 해당하는 코드는 지우지 말 것!
-
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -106,7 +106,7 @@ DATABASES = {
    }
     }
 }
-"""
+
 ALLOWED_HOSTS = []
 #ALLOWED_HOSTS = ['example.kyonggi.kr', '101.101.218.36']
 

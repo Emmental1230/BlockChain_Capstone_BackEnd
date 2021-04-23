@@ -41,11 +41,11 @@ def member_list(request):
 
 
 @csrf_exempt
-def member(request, pk):
+def member(request, num):
     """
     학생 수정
     """
-    obj = Member.objects.get(stdnum=pk)
+    obj = Member.objects.get(stdnum=num)
 
     if request.method == 'GET':
         serializer = MemberSerializer(obj)

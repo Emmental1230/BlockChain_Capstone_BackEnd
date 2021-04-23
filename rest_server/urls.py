@@ -34,5 +34,5 @@ urlpatterns = [
     path('api/', include((router.urls, 'member'), namespace='api')),
 
     path('members/', views.member_list),
-    path('members/<int:pk>', views.member),
+    path('members/<int:num>', views.member),
 ]
