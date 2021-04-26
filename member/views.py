@@ -91,20 +91,3 @@ def readDID(request):
     #print(json.dumps(json_data))
     html = "<html><body>email값: %s \n did값 %s</body></html>" %(email, did) 
     return HttpResponse(html)
-   """
-   if request.method == 'GET': 
-        command = ["sh","../docker/Blockchain_Capstone_Indy/start_docker/api.sh"]
-        try: 
-            process = Popen(command, stdout=PIPE, stderr=STDOUT) 
-            output = process.stdout.read() 
-            exitstatus = process.poll() 
-            if (exitstatus==0): 
-                    result = {"status": "Success", "output":str(output)} 
-            else: 
-                    result = {"status": "Failed", "output":str(output)}
-        except Exception as e: 
-            result =  {"status": "failed", "output":str(e)} 
-        html = "<html><body>Script status: %s \n Output: %s</body></html>" %(result['status'],result['output']) 
-        return HttpResponse(html) 
-        #return Response(status=status.HTTP_200_OK)
-    """
