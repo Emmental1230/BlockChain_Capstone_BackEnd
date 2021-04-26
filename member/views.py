@@ -4,6 +4,8 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from .models import Member
 from .serializers import MemberSerializer
+from subprocess import Popen, PIPE, STDOUT 
+from django.http import HttpResponse
 import subprocess
 #import bcrypt
 # Create your views here.
