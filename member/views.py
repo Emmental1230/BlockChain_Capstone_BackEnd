@@ -79,5 +79,5 @@ def run_python(request):
         except Exception as e: 
             result =  {"status": "failed", "output":str(e)} 
         html = "<html><body>Script status: %s \n Output: %s</body></html>" %(result['status'],result['output']) 
-        #return HttpResponse(html) 
-        return Response(status=status.HTTP_200_OK)
+        return HttpResponse(html) 
+        #return Response(status=status.HTTP_200_OK)
