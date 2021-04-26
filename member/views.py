@@ -65,7 +65,7 @@ def member(request, num):
 @api_view(['GET'])
 def run_python(request): 
     if request.method == 'GET': 
-        command = ["python3","/Users/younggilpark/Desktop/Capstone/Capstone_younggil/backend/echo_test.py"]
+        command = ["python3","../docker/Blockchain_Capstone_Indy/.start_docker/test_echo.py"]
         try: 
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
