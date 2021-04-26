@@ -64,7 +64,7 @@ def member(request, num):
     
 
 
-@api_view(['GET'])
+@csrf_exempt
 def run_python(request): 
     if request.method == 'GET': 
         command = ["python3","../docker/Blockchain_Capstone_Indy/.start_docker/test_echo.py"]
