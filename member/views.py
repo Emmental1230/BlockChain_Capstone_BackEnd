@@ -88,7 +88,7 @@ def readDID(request):
         json_data = json.load(f)
         email = json_data['email']
         did = json_data['did']
-    return JsonResponse(json_data.data, status=201)
+    return JsonResponse(json_data, status=201)
     #print(json.dumps(json_data))
     #html = "<html><body>email값: %s \n did값 %s</body></html>" %(email, did) 
     #return HttpResponse(html)
