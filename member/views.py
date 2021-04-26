@@ -84,7 +84,7 @@ def run_python(request):
 
 @csrf_exempt
 def readDID(request): 
-    with open('./data.json')as f:
+    with open('../docker/Blockchain_Capstone_Indy/start_docker/data.json')as f:
         json_data = json.load(f)
         email = json_data['email']
         did = json_data['did']
