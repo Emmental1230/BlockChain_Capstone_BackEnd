@@ -98,9 +98,14 @@ def run_python(request):
             else: 
                     result = {"status": "Failed  ", "output":str(output)}
         except Exception as e: 
-            result =  {"status": "failed"  , "output":str(e)} 
-        html = "<html><body>Script status: %s <br> Output: %s<br></body></html>" %(result['status'], result['output']) 
-        return HttpResponse(html) 
+            result =  {"status": "failed_Exception "  , "output":str(e)} 
+        with open('../docker/Blockchain_Capstone_Indy/start_docker/data.json')as f:
+        json_data = json.load(f)
+        email = json_data['email']
+        did = json_data['did']
+    return JsonResponse(json_data, status=201)
+        #html = "<html><body>Script status: %s <br> Output: %s<br></body></html>" %(result['status'], result['output']) 
+        #return HttpResponse(html) 
         #return Response(status=status.HTTP_200_OK)
 
 @csrf_exempt
