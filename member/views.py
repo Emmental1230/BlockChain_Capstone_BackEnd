@@ -68,7 +68,8 @@ def member(request, num):
 def run_python(request): 
     if request.method == 'GET': 
         #command = ["python3","../docker/Blockchain_Capstone_Indy/start_docker/test_echo.py"]
-        command = ["sh","../docker/Blockchain_Capstone_Indy/start_docker/api.sh f57bccba3b28"]
+        #command = ["sh","../docker/Blockchain_Capstone_Indy/start_docker/api.sh f57bccba3b28"]
+        command = ["ls -al","../docker/Blockchain_Capstone_Indy/start_docker/"]
         try: 
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
