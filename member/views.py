@@ -67,8 +67,8 @@ def member(request, num):
 @csrf_exempt
 def run_python(request): 
     if request.method == 'GET': 
-        command = ["python3","../docker/Blockchain_Capstone_Indy/start_docker/test_echo.py"]
-        #command = ["sh","../docker/Blockchain_Capstone_Indy/start_docker/api.sh f57bccba3b28 test@kyonggi.ac.kr"]
+        #command = ["python3","../docker/Blockchain_Capstone_Indy/start_docker/test_echo.py"]
+        command = ["sh","../docker/Blockchain_Capstone_Indy/start_docker/api.sh f57bccba3b28 test@kyonggi.ac.kr"]
         try: 
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
@@ -79,7 +79,7 @@ def run_python(request):
                     result = {"status": "Failed  ", "output":str(output)}
         except Exception as e: 
             result =  {"status": "failed"  , "output":str(e)} 
-        html = "<html><body>Script status: %s <br>\n Output: %s<br></body></html>" %(result['status'], result['output']) 
+        html = "<html><body>Script status: %s <br> Output: %s<br></body></html>" %(result['status'], result['output']) 
         return HttpResponse(html) 
         #return Response(status=status.HTTP_200_OK)
 
