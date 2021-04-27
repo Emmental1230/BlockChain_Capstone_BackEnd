@@ -100,8 +100,10 @@ def run_python(request):
                     did = json_data['did']
             else: 
                 result = {"status": "Failed  ", "output":str(output)}
+                return JsonResponse(json_data, status=400)
         except Exception as e: 
             result =  {"status": "failed_Exception"  , "output":str(e)} 
+            return JsonResponse(json_data, status=400)
 
         return JsonResponse(json_data, status=201)
 
