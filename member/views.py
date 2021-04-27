@@ -6,7 +6,9 @@ from .models import Member
 from .serializers import MemberSerializer
 from subprocess import Popen, PIPE, STDOUT 
 from django.http import HttpResponse
-import subprocess, json
+import subprocess
+import hashlib
+import json
 #import bcrypt
 # Create your views here.
 
@@ -34,21 +36,38 @@ def member_list(request):
 
     elif request.method == 'POST':
         data = JSONParser().parse(request)
+
+        email = data['email']
+        print(email)
+        email_dump = json.dumps(email, sort_keys = True).encode()
+        email_hash = hashlib.sha256(email_dump).hexdigest()
+        print(email_hash)
+
+        email_data_json = { 'email' : '' }
+        email_data_json['email'] = email_hash
+        print(email_data_json)
+
+        data['email'] = email_hash
+        print(data)
+
         serializer = MemberSerializer(data=data)
+
+
         #if pk == 'temporaryKey':         #app사용자인지 확인
         if serializer.is_valid():       #입력 data들 포맷 일치 여부 확인
             serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        return JsonResponse(serializer.errors, status=400)         
+
+            return JsonResponse(email_data_json, status=201)
+        return JsonResponse(serializer.errors, status=400)             
 
 
 
 @csrf_exempt
-def member(request, num):
+def member(request, word):
     """
     학생 수정
     """
-    obj = Member.objects.get(stdnum=num)
+    obj = Member.objects.get(email=word)
 
     if request.method == 'GET':
         serializer = MemberSerializer(obj)
@@ -60,7 +79,7 @@ def member(request, num):
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data, status=201)
-        return JsonResponse(serializer.errors, status=400)  
+        return JsonResponse(serializer.errors, status=400)   
     
 
 
