@@ -110,7 +110,7 @@ def run_python(request):
         #return HttpResponse(html) 
         #return Response(status=status.HTTP_200_OK)
 
-@csrf_exempt
+#@csrf_exempt
 #def readDID(request): 
  #   with open('../docker/Blockchain_Capstone_Indy/start_docker/data.json')as f:
   #      json_data = json.load(f)
@@ -120,4 +120,3 @@ def run_python(request):
     #print(json.dumps(json_data))
     #html = "<html><body>email값: %s \n did값 %s</body></html>" %(email, did) 
     #return HttpResponse(html)
-   
