@@ -67,7 +67,7 @@ def member(request, num):
 @csrf_exempt
 def run_python(request): 
     if request.method == 'GET': 
-        command = ["sh","../docker/Blockchain_Capstone_Indy/start_docker/api.sh "+" f57bccba3b28 "+"test@kyonggi.ac.kr"]
+        command = ["sh","../docker/Blockchain_Capstone_Indy/start_docker/api.sh f57bccba3b28 test@kyonggi.ac.kr"]
         try: 
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
