@@ -34,7 +34,7 @@ urlpatterns = [
     path('api/', include((router.urls, 'member'), namespace='api')),
 
     path('members/', views.member_list),
-    path('members/<int:num>', views.member),
+    path('members/<word>', views.member),
     path('runpython/', run_python),
     path('readdid/', readDID),
 ]
