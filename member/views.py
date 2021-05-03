@@ -38,6 +38,10 @@ def member_list(request):
         data = JSONParser().parse(request)
 
         email = data['email']
+
+        if data.filter(email).exists() :
+            return JsonResponse({'msg':'Email is already exists'}, status=400)
+
         print(email)
         email_dump = json.dumps(email, sort_keys = True).encode()
         email_hash = hashlib.sha256(email_dump).hexdigest()
@@ -100,10 +104,10 @@ def run_python(request):
                     did = json_data['did']
             else: 
                 result = {"status": "Failed  ", "output":str(output)}
-                return JsonResponse(json_data, status=400)
+                return JsonResponse({'msg':'exitstatus is not 0'}, status=400)
         except Exception as e: 
             result =  {"status": "failed_Exception"  , "output":str(e)} 
-            return JsonResponse(json_data, status=400)
+            return JsonResponse({'msg':'failed_Exception'}, status=400)
 
         return JsonResponse(json_data, status=201)
 
