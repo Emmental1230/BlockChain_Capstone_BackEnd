@@ -47,15 +47,9 @@ def member_list(request):
 
         email_dump = json.dumps(email, sort_keys = True).encode()
         email_hash = hashlib.sha256(email_dump).hexdigest()
-        print(email_hash)
-
         email_data_json = { 'email' : '' }
         email_data_json['email'] = email_hash
-        print(email_data_json)
-
-        
         data['email'] = email_hash
-        print(data)
 
         serializer = MemberSerializer(data=data)
 
@@ -63,8 +57,8 @@ def member_list(request):
         #if pk == 'temporaryKey':         #app사용자인지 확인
         if serializer.is_valid():       #입력 data들 포맷 일치 여부 확인
             serializer.save()
-
             return JsonResponse(email_data_json, status=201)
+
         return JsonResponse(serializer.errors, status=400)             
 
 
