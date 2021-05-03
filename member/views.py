@@ -37,6 +37,7 @@ def member_list(request):
     elif request.method == 'POST':
         data = JSONParser().parse(request)
         studentDB = Member.objects.all()
+        '''
         try:
             student = Member(
                 major =data['major']
@@ -44,15 +45,16 @@ def member_list(request):
                 name = data['name']
                 email = data['email']
             )
-
+        '''
         email = data['email']
+        '''
         stdnum = data['stdnum']
-
+        
         if studentDB.filter(email = email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
         elif studentDB.filter(stdnum = stdnum).exists() :
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
-
+        '''
         email_dump = json.dumps(email, sort_keys = True).encode()
         email_hash = hashlib.sha256(email_dump).hexdigest()
         email_data_json = { 'email' : '' }

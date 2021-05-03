@@ -15,8 +15,6 @@ from pathlib import Path
 # mac에서 mysql 연동 해주기위한 코드
 import pymysql
 import os
-pymysql.install_as_MySQLdb()
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -97,8 +95,8 @@ DATABASES = {
         'NAME'     : 'caps_db',
         'USER'     : 'root',
         'PASSWORD' : 'root',
-        'HOST'     : '127.0.0.1',
-        'PORT'     : '3306',
+        'HOST'     : '',
+        'PORT'     : '',
         'OPTIONS'  : {'charset': 'utf8mb4'},
    'TEST': {
    'CHARSET'  : 'utf8mb4',
@@ -107,8 +105,8 @@ DATABASES = {
     }
 }
 
-ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com"]
-
+#ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com"]
+ALLOWED_HOSTS = ["101.101.218.36"]
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
