@@ -38,13 +38,12 @@ def member_list(request):
         data = JSONParser().parse(request)
 
         email = data['email']
+        stdnum = data['stdnum']
 
         if data.filter(email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
-
-        print(email)
-        if data.filter(email).exists() :
-            return JsonResponse({'msg':'Email is already exists'}, status=400)
+        elif data.filter(stdnum).exists() :
+            return JsonResponse({'msg':'stdnum is already exists'}, status=400)
 
         email_dump = json.dumps(email, sort_keys = True).encode()
         email_hash = hashlib.sha256(email_dump).hexdigest()
