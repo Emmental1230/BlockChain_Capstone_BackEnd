@@ -14,6 +14,7 @@ from pathlib import Path
 
 # mac에서 mysql 연동 해주기위한 코드
 import pymysql
+import os
 pymysql.install_as_MySQLdb()
 
 
@@ -61,8 +62,6 @@ MIDDLEWARE = [
 ]
 
 
-#CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:3000','http://localhost:3000','127.0.0.1']
-#CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:8080', 'http://localhost:8080']
 CORS_ALLOW_CREDENTIALS = True
 
@@ -108,13 +107,11 @@ DATABASES = {
     }
 }
 
-ALLOWED_HOSTS = []
-#ALLOWED_HOSTS = ['example.kyonggi.kr', '101.101.218.36']
-
-ALLOWED_HOSTS = ['example.kyonggi.kr', '101.101.210.210','127.0.0.1']
+ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com"]
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {

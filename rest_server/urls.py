@@ -31,10 +31,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/doc', get_swagger_view(title='Rest API Document')),
     path('api-auth/', include('rest_framework.urls')),
-    path('api/', include((router.urls, 'member'), namespace='api')),
+    # path('api/', include((router.urls, 'member'), namespace='api')),
 
-    path('members/', views.member_list),
-    path('members/<word>', views.member),
-    path('runpython/', run_python),
+    path('api/members/', views.member_list),
+    path('api/members/<word>', views.member),
+    path('api/runpython/', run_python),
     #path('readdid/', readDID),
 ]
