@@ -36,13 +36,21 @@ def member_list(request):
 
     elif request.method == 'POST':
         data = JSONParser().parse(request)
+        studentDB = Member.objects.all()
+        try:
+            student = Member(
+                major =data['major']
+                stdnum = data['stdnum']
+                name = data['name']
+                email = data['email']
+            )
 
         email = data['email']
         stdnum = data['stdnum']
 
-        if data.filter(email).exists() :
+        if studentDB.filter(email = email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
-        elif data.filter(stdnum).exists() :
+        elif studentDB.filter(stdnum = stdnum).exists() :
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
 
         email_dump = json.dumps(email, sort_keys = True).encode()
@@ -122,4 +130,34 @@ def readDID(request):
     #print(json.dumps(json_data))
     #html = "<html><body>email값: %s \n did값 %s</body></html>" %(email, did) 
     #return HttpResponse(html)
-   
+
+
+@csrf_exempt
+def doesEmailExists(request):
+    #가입된 회원이 맞는지 확인
+    if request.method == 'POST':
+        data = JSONParser().parse(request)
+
+        email = data['email']
+        stdnum = data['stdnum']
+
+        if data.filter(email).exists() :
+            return JsonResponse({'msg':'Email is already exists'}, status=400)
+        elif data.filter(stdnum).exists() :
+            return JsonResponse({'msg':'stdnum is already exists'}, status=400)
+
+        email_dump = json.dumps(email, sort_keys = True).encode()
+        email_hash = hashlib.sha256(email_dump).hexdigest()
+        email_data_json = { 'email' : '' }
+        email_data_json['email'] = email_hash
+        data['email'] = email_hash
+
+        serializer = MemberSerializer(data=data)
+
+
+        #if pk == 'temporaryKey':         #app사용자인지 확인
+        if serializer.is_valid():       #입력 data들 포맷 일치 여부 확인
+            serializer.save()
+            return JsonResponse(email_data_json, status=201)
+
+        return JsonResponse(serializer.errors, status=400) 
