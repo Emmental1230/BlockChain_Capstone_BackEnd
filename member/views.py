@@ -32,7 +32,7 @@ def member_list(request):
     if request.method == 'GET':
         members = Member.objects.all()
         serializer = MemberSerializer(members, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return JsonResponse(serializer.data, safe=False, status=201)
 
     elif request.method == 'POST':
         data = JSONParser().parse(request)
@@ -43,6 +43,9 @@ def member_list(request):
             return JsonResponse({'msg':'Email is already exists'}, status=400)
 
         print(email)
+        if data.filter(email).exists() :
+            return JsonResponse({'msg':'Email is already exists'}, status=400)
+
         email_dump = json.dumps(email, sort_keys = True).encode()
         email_hash = hashlib.sha256(email_dump).hexdigest()
         print(email_hash)
@@ -51,6 +54,7 @@ def member_list(request):
         email_data_json['email'] = email_hash
         print(email_data_json)
 
+        
         data['email'] = email_hash
         print(data)
 
@@ -75,7 +79,7 @@ def member(request, word):
 
     if request.method == 'GET':
         serializer = MemberSerializer(obj)
-        return JsonResponse(serializer.data, safe=False)
+        return JsonResponse(serializer.data, status=201, safe=False)
     
     elif request.method == 'POST':
         data = JSONParser().parse(request)
@@ -91,7 +95,7 @@ def member(request, word):
 def run_python(request): 
     if request.method == 'GET': 
         #command = ["python3","../docker/Blockchain_Capstone_Indy/start_docker/test_echo.py"]
-        command = ["sh","../docker/Blockchain_Capstone_Indy/start_docker/api.sh","f57bccba3b28","test@kyonggi.ac.kr"]
+        command = ["sh","/home/caps/indy/start_docker/api.sh","f57bccba3b28","test@kyonggi.ac.kr"]
         #command = ["ls","-al","../docker/Blockchain_Capstone_Indy/start_docker/"]
         try: 
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
