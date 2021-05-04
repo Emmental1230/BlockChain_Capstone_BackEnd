@@ -60,7 +60,7 @@ MIDDLEWARE = [
 ]
 
 
-CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:8080', 'http://localhost:8080','https://www.kyonggiupass.com']
+CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:8080', 'http://localhost:8080','https://www.kyonggiupass.com','http://www.kyonggiupass.com']
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'rest_server.urls'
@@ -105,7 +105,7 @@ DATABASES = {
     }
 }
 
-ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com","www.kyonggiupass.com"]
+ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com","www.kyonggiupass.com",".kyonggiupass.com"]
 #ALLOWED_HOSTS = ["101.101.218.36"]
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
