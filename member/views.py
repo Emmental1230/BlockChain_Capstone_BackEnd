@@ -102,6 +102,7 @@ def run_python(request):
         #command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
         #command = ["ls","-al","../docker/Blockchain_Capstone_Indy/start_docker/"]
         command = ["sh","../../indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
+        pwd3 = os.path.realpath(__file__)
         try: 
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
@@ -111,7 +112,6 @@ def run_python(request):
                 json_data = json.load(f)
                 email = json_data['email']
                 did = json_data['did']
-            pwd3 = os.path.realpath(__file__)
             '''
             if (exitstatus==0): 
                 with open('./data.json')as f:
@@ -124,7 +124,7 @@ def run_python(request):
             '''
         except Exception as e: 
             result =  {"status": "failed_Exception"  , "output":str(e)} 
-            return JsonResponse({'msg':'failed_Exception','pwd3':pwd3}, status=400)
+            return JsonResponse({'msg':'failed_Exception','pwd3':pwd1}, status=400)
 
         return JsonResponse(json_data, status=201)
 
