@@ -105,7 +105,7 @@ def run_python(request):
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
             exitstatus = process.poll() 
-            print(os.path.realpath(__file__)) 
+            pwd = os.path.realpath(__file__)
             with open('./data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
@@ -122,7 +122,7 @@ def run_python(request):
             '''
         except Exception as e: 
             result =  {"status": "failed_Exception"  , "output":str(e)} 
-            return JsonResponse({'msg':'failed_Exception'}, status=400)
+            return JsonResponse({'msg':'failed_Exception','pwd':pwd}, status=400)
 
         return JsonResponse(json_data, status=201)
 
