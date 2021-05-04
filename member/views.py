@@ -106,9 +106,9 @@ def run_python(request):
             exitstatus = process.poll() 
 
             with open('./data.json')as f:
-                    json_data = json.load(f)
-                    email = json_data['email']
-                    did = json_data['did']
+                json_data = json.load(f)
+                email = json_data['email']
+                did = json_data['did']
           '''  if (exitstatus==0): 
                 with open('./data.json')as f:
                     json_data = json.load(f)
