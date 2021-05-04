@@ -104,7 +104,12 @@ def run_python(request):
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
             exitstatus = process.poll() 
-            if (exitstatus==0): 
+
+            with open('./data.json')as f:
+                    json_data = json.load(f)
+                    email = json_data['email']
+                    did = json_data['did']
+          '''  if (exitstatus==0): 
                 with open('./data.json')as f:
                     json_data = json.load(f)
                     email = json_data['email']
@@ -112,6 +117,7 @@ def run_python(request):
             else: 
                 result = {"status": "Failed  ", "output":str(output)}
                 return JsonResponse({'msg':'exitstatus is not 0'}, status=400)
+                '''
         except Exception as e: 
             result =  {"status": "failed_Exception"  , "output":str(e)} 
             return JsonResponse({'msg':'failed_Exception'}, status=400)
