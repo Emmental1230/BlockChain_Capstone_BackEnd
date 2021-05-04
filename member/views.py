@@ -108,7 +108,7 @@ def run_python(request):
             exitstatus = process.poll() 
             
             pwd = os.path.realpath(__file__)
-            with open('../../indy/start_docker/data.json')as f:
+            with open('/../../indy/start_docker/data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
                 did = json_data['did']
