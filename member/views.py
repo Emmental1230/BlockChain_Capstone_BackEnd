@@ -9,6 +9,7 @@ from django.http import HttpResponse
 import subprocess
 import hashlib
 import json
+import os
 #import bcrypt
 # Create your views here.
 
@@ -104,7 +105,7 @@ def run_python(request):
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
             exitstatus = process.poll() 
-
+            print(os.path.realpath(__file__)) 
             with open('./data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
