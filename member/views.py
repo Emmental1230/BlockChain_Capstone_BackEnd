@@ -106,11 +106,13 @@ def run_python(request):
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
             exitstatus = process.poll() 
-            pwd = os.path.realpath(__file__)
+            pwd1 = os.path.realpath(__file__)
             with open('../..indy/start_docker/data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
                 did = json_data['did']
+                pwd2 = os.path.realpath(__file__)
+            pwd3 = os.path.realpath(__file__)
             '''
             if (exitstatus==0): 
                 with open('./data.json')as f:
@@ -123,7 +125,7 @@ def run_python(request):
             '''
         except Exception as e: 
             result =  {"status": "failed_Exception"  , "output":str(e)} 
-            return JsonResponse({'msg':'failed_Exception','pwd':pwd}, status=400)
+            return JsonResponse({'msg':'failed_Exception','pwd':pwd1, pwd2, pwd3}, status=400)
 
         return JsonResponse(json_data, status=201)
 
