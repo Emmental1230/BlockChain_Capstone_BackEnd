@@ -124,7 +124,7 @@ def run_python(request):
             '''
         except Exception as e: 
             result =  {"status": "failed_Exception"  , "output":str(e)} 
-            return JsonResponse({'msg':'failed_Exception','pwd1':pwd1,'pwd3':pwd3}, status=400)
+            return JsonResponse({'msg':'failed_Exception','pwd3':pwd3}, status=400)
 
         return JsonResponse(json_data, status=201)
 
