@@ -98,7 +98,7 @@ def member(request, word):
 def run_python(request): 
     if request.method == 'GET': 
         #command = ["python3","../docker/Blockchain_Capstone_Indy/start_docker/test_echo.py"]
-        command = ["sh","/home/caps/indy/start_docker/api.sh","f57bccba3b28","test@kyonggi.ac.kr"]
+        command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
         #command = ["ls","-al","../docker/Blockchain_Capstone_Indy/start_docker/"]
         try: 
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
