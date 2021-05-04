@@ -106,6 +106,7 @@ DATABASES = {
 }
 
 ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com","www.kyonggiupass.com",".kyonggiupass.com"]
+
 #ALLOWED_HOSTS = ["101.101.218.36"]
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
