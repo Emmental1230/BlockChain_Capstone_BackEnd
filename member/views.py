@@ -104,12 +104,10 @@ def run_python(request):
         command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
         try: 
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
-            output = process.stdout.read() 
-            exitstatus = process.poll() 
-            
-            pwd = os.path.realpath(__file__)
-            with open('/home/caps/indy/start_docker/data.json')as f:
-                
+#            output = process.stdout.read() 
+#            exitstatus = process.poll() 
+#            pwd = os.path.realpath(__file__)
+            with open('/home/caps/indy/start_docker/data.json')as f:               
                 json_data = json.load(f)
                 email = json_data['email']
                 did = json_data['did']
