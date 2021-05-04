@@ -99,14 +99,15 @@ def member(request, word):
 def run_python(request): 
     if request.method == 'GET': 
         #command = ["python3","../docker/Blockchain_Capstone_Indy/start_docker/test_echo.py"]
-        command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
+        #command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
         #command = ["ls","-al","../docker/Blockchain_Capstone_Indy/start_docker/"]
+        command = ["sh","../../indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
         try: 
             process = Popen(command, stdout=PIPE, stderr=STDOUT) 
             output = process.stdout.read() 
             exitstatus = process.poll() 
             pwd = os.path.realpath(__file__)
-            with open('./data.json')as f:
+            with open('../..indy/start_docker/data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
                 did = json_data['did']
