@@ -57,7 +57,7 @@ def member_list(request):
             serializer.save()
             return JsonResponse(email_data_json, status=201)
 
-        return JsonResponse(serializer.errors, status=400)         
+        return JsonResponse(serializer.errors, status=400)       
 
 
 @csrf_exempt
