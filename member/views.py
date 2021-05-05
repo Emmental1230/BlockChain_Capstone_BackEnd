@@ -16,33 +16,33 @@ import os
 
 @csrf_exempt
 def member_list(request):
-    #모든 학생들 조회
+    #모든 학생들 조회 or 새로운 학생 생성
     if request.method == 'GET':
         members = Member.objects.all()
         serializer = MemberSerializer(members, many=True)
         return JsonResponse(serializer.data, safe=False, status=201)
-    #회원가입 시
+
     elif request.method == 'POST':
         data = JSONParser().parse(request)
         studentDB = Member.objects.all()
         '''
         try:
             student = Member(
-                major = data['major'],
-                stdnum1 = data['stdnum'],
-                name = data['name'],
-                email1 = data['email'],
+                major =data['major']
+                stdnum = data['stdnum']
+                name = data['name']
+                email = data['email']
             )
         '''
         email = data['email']
-        #stdnum = data['stdnum']
         '''
-        if studentDB.filter(email1 = email).exists() :
+        stdnum = data['stdnum']
+        
+        if studentDB.filter(email = email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
-        elif studentDB.filter(stdnum1 = stdnum).exists() :
+        elif studentDB.filter(stdnum = stdnum).exists() :
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
         '''
-        #email 해싱 부분
         email_dump = json.dumps(email, sort_keys = True).encode()
         email_hash = hashlib.sha256(email_dump).hexdigest()
         email_data_json = { 'email' : '' }
@@ -51,12 +51,13 @@ def member_list(request):
 
         serializer = MemberSerializer(data=data)
 
+
         #if pk == 'temporaryKey':         #app사용자인지 확인
         if serializer.is_valid():       #입력 data들 포맷 일치 여부 확인
             serializer.save()
             return JsonResponse(email_data_json, status=201)
 
-        return JsonResponse(serializer.errors, status=400)             
+        return JsonResponse(serializer.errors, status=400)         
 
 
 @csrf_exempt
