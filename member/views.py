@@ -28,14 +28,13 @@ def member_list(request):
         
         try:
             student = Member(
-                major =data['major']
-                stdnum = data['stdnum']
-                name = data['name']
+                major = data['major'],
+                stdnum = data['stdnum'],
+                name = data['name'],
                 email = data['email']
             )
         
         email = data['email']
-        
         stdnum = data['stdnum']
         
         if studentDB.filter(email = email).exists() :
@@ -142,5 +141,5 @@ def findMyInfo(request):
             email_data_json = { 'email' : '' }  #email_data_json 생성
             email_data_json['email'] = email_hash   #해싱된 것을 json으로 저장
             data['email'] = email_hash
-            
+
         return JsonResponse(email_data_json, status=201)
