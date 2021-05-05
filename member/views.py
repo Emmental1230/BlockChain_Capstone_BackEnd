@@ -43,7 +43,7 @@ def member_list(request):
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
         '''
         #email 해싱 부분
-        email_dump = json.dumps(email sort_keys = True).encode()
+        email_dump = json.dumps(email, sort_keys = True).encode()
         email_hash = hashlib.sha256(email_dump).hexdigest()
         email_data_json = { 'email' : '' }
         email_data_json['email'] = email_hash
