@@ -105,7 +105,7 @@ DATABASES = {
     }
 }
 
-ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com","www.kyonggiupass.com",".kyonggiupass.com"]
+ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com","www.kyonggiupass.com",".kyonggiupass.com", "118.67.134.159"]
 
 #ALLOWED_HOSTS = ["101.101.218.36"]
 # Password validation
