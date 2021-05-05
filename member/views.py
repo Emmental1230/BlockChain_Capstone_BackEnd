@@ -29,21 +29,21 @@ def member_list(request):
         try:
             student = Member(
                 major = data['major'],
-                stdnum = data['stdnum'],
+                stdnum1 = data['stdnum'],
                 name = data['name'],
-                email = data['email'],
+                email1 = data['email'],
             )
         
         email = data['email']
         stdnum = data['stdnum']
         
-        if studentDB.filter(email = email).exists() :
+        if studentDB.filter(email1 = email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
-        elif studentDB.filter(stdnum = stdnum).exists() :
+        elif studentDB.filter(stdnum1 = stdnum).exists() :
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
         
         #email 해싱 부분
-        email_dump = json.dumps(email, sort_keys = True).encode()
+        email_dump = json.dumps(email sort_keys = True).encode()
         email_hash = hashlib.sha256(email_dump).hexdigest()
         email_data_json = { 'email' : '' }
         email_data_json['email'] = email_hash
