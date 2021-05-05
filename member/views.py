@@ -31,7 +31,7 @@ def member_list(request):
                 major = data['major'],
                 stdnum = data['stdnum'],
                 name = data['name'],
-                email = data['email']
+                email = data['email'],
             )
         
         email = data['email']
