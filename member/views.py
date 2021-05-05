@@ -35,7 +35,7 @@ def member_list(request):
             )
         '''
         email = data['email']
-        stdnum = data['stdnum']
+        #stdnum = data['stdnum']
         '''
         if studentDB.filter(email1 = email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
