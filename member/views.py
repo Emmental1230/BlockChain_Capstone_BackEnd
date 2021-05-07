@@ -138,9 +138,9 @@ def findmyinfo(request):
                 email_dump = json.dumps(data['email'], sort_keys = True).encode()
                 email_hash = hashlib.sha256(email_dump).hexdigest()
                 return JsonResponse({'email':email_hash}, status=201)
-            else 
+            else :
                 return JsonResponse({'msg':'email과 stdnum이 일치하지 않습니다.'}, status=400)
-        else
+        else :
             return JsonResponse({'msg': '가입되지 않은 stdnum입니다'}, status=400)
             '''
             email_dump = json.dumps(email, sort_keys = True).encode()
