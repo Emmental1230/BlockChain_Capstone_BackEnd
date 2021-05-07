@@ -19,7 +19,6 @@ from django.contrib import admin
 from rest_framework import routers
 from rest_framework_swagger.views import get_swagger_view
 from member import views
-from member.views import run_python
 import member.api
 
 
@@ -37,6 +36,7 @@ urlpatterns = [
     path('api/members/', views.member_list),
     #path('api/members/findmyinfo/',views.findMyInfo ),
     path('api/members/<word>', views.member),
-    path('api/runpython/', run_python),
+    path('api/runpython/', views.run_python),
+    path('api/findmyinfo/', views.findmyinfo),
     #path('readdid/', readDID),
 ]
