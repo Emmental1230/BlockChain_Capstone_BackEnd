@@ -80,7 +80,7 @@ def member_list(request):
 @csrf_exempt
 def member(request, word):
     #학생 수정
-    obj = Member.objects.get(email=word)
+    obj = Member.objects.get(email_hash=word)
 
     if request.method == 'GET':
         serializer = MemberSerializer(obj)
