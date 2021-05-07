@@ -10,6 +10,8 @@ import subprocess
 import hashlib
 import json
 import os
+import random
+import base62
 #import bcrypt
 # Create your views here.
 
@@ -27,6 +29,7 @@ def member_list(request):
         studentDB = Member.objects.all()
 
         email = data['email']
+        '''
         stdnum = data['stdnum']
 
         if studentDB.filter(email = email).exists() :
@@ -35,11 +38,27 @@ def member_list(request):
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
         
         #email 해시 하는 부분
+        '''
+
+        #ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        salt = base62.encodebytes(os.urandom(16))
+        salt = bytes(salt, encoding="utf-8")
+        #for i in range(16):
+        #    salt.append(random.choice(ALPHABET))
+
+        #salt_string = "".join(salt)
+
         email_dump = json.dumps(email, sort_keys = True).encode()
+        email_dump = email_dump + salt
+        #print('salt_string = ')
+        #print(salt_string)
+        #print('email_dump = ')
+        #print(email_dump)
+
         email_hash = hashlib.sha256(email_dump).hexdigest()
-        email_data_json = { 'email' : '' }
-        email_data_json['email'] = email_hash
-        data['email'] = email_hash
+        email_data_json = { 'email_hash' : '' }
+        email_data_json['email_hash'] = email_hash
+        data['email_hash'] = email_hash
 
         serializer = MemberSerializer(data=data)
 
@@ -54,7 +73,7 @@ def member_list(request):
 @csrf_exempt
 def member(request, word):
     #학생 수정
-    obj = Member.objects.get(email=word)
+    obj = Member.objects.get(email_hash=word)
 
     if request.method == 'GET':
         serializer = MemberSerializer(obj)
