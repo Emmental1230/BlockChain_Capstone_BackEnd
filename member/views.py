@@ -29,7 +29,6 @@ def member_list(request):
         studentDB = Member.objects.all()
 
         email = data['email']
-        '''
         stdnum = data['stdnum']
 
         if studentDB.filter(email = email).exists() :
@@ -38,7 +37,7 @@ def member_list(request):
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
         
         #email 해시 하는 부분
-        '''
+        
 
         #ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         salt = base62.encodebytes(os.urandom(16))
