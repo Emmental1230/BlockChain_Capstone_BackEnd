@@ -25,24 +25,16 @@ def member_list(request):
     elif request.method == 'POST':
         data = JSONParser().parse(request)
         studentDB = Member.objects.all()
-        '''
-        try:
-            student = Member(
-                major =data['major']
-                stdnum = data['stdnum']
-                name = data['name']
-                email = data['email']
-            )
-        '''
+
         email = data['email']
-        '''
         stdnum = data['stdnum']
-        
+
         if studentDB.filter(email = email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
         elif studentDB.filter(stdnum = stdnum).exists() :
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
-        '''
+        
+        #email 해시 하는 부분
         email_dump = json.dumps(email, sort_keys = True).encode()
         email_hash = hashlib.sha256(email_dump).hexdigest()
         email_data_json = { 'email' : '' }
@@ -50,7 +42,6 @@ def member_list(request):
         data['email'] = email_hash
 
         serializer = MemberSerializer(data=data)
-
 
         #if pk == 'temporaryKey':         #app사용자인지 확인
         if serializer.is_valid():       #입력 data들 포맷 일치 여부 확인
@@ -92,23 +83,17 @@ def run_python(request):
                 email = json_data['email']
                 did = json_data['did']
             
-            '''
-            if (exitstatus==0): 
-                with open('./data.json')as f:
-                    json_data = json.load(f)
-                    email = json_data['email']
-                    did = json_data['did']
-            else: 
-                result = {"status": "Failed  ", "output":str(output)}
-                return JsonResponse({'msg':'exitstatus is not 0'}, status=400)
-            '''
+                #result = {"status": "Failed  ", "output":str(output)}
+
+
         except Exception as e: 
-            result =  {"status": "failed_Exception"  , "output":str(e)} 
+            #result =  {"status": "failed_Exception"  , "output":str(e)} 
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e),'pwd':pwd}, status=400)
 
         return JsonResponse(json_data, status=201)
 
-
+#현재 안씀
+'''
 @csrf_exempt
 def readDID(request): 
     with open('../docker/Blockchain_Capstone_Indy/start_docker/data.json')as f:
@@ -116,3 +101,20 @@ def readDID(request):
         email = json_data['email']
         did = json_data['did']
     return JsonResponse(json_data, status=201)
+'''
+
+@csrf_exempt
+def findmyinfo(request):
+    #email, stdnum 받을 경우, 해당 key값 반환
+    if request.method == 'POST':
+        data = JSONParser().parse(request)
+        studentDB = Member.objects.all()
+        #email = "1544455cac2644c63b59551bc9e135a38cd9b59ba2ca4f475d45a41737bf3f62"
+        #stdnum = "12341234"
+
+        if studentDB.filter(email = data['email']).exists() :
+            email = studentDB.filter(email = data['email'])
+            stdnum = studentDB.filter(stdnum = data['stdnum'])
+            if email[0]==stdnum[0] :
+                #반환값을 만들고 해당 값을 반환하면됨
+            return HttpResponse(html)
