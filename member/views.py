@@ -18,12 +18,13 @@ import base62
 
 @csrf_exempt
 def member_list(request):
-    #모든 학생들 조회 or 새로운 학생 생성
+    #모든 학생들 조회
     if request.method == 'GET':
         members = Member.objects.all()
         serializer = MemberSerializer(members, many=True)
         return JsonResponse(serializer.data, safe=False, status=201)
 
+    #회원가입 요청
     elif request.method == 'POST':
         data = JSONParser().parse(request)
         studentDB = Member.objects.all()
@@ -31,13 +32,13 @@ def member_list(request):
         email = data['email']
         stdnum = data['stdnum']
 
+        #중복 회원여부 확인
         if studentDB.filter(email = email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
         elif studentDB.filter(stdnum = stdnum).exists() :
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
         
         #email 해시 하는 부분
-        
 
         #ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         salt = base62.encodebytes(os.urandom(16))
@@ -48,11 +49,7 @@ def member_list(request):
         #salt_string = "".join(salt)
 
         email_dump = json.dumps(email, sort_keys = True).encode()
-        email_dump = email_dump + salt
-        #print('salt_string = ')
-        #print(salt_string)
-        #print('email_dump = ')
-        #print(email_dump)
+        email_dump += salt
 
         email_hash = hashlib.sha256(email_dump).hexdigest()
         email_data_json = { 'email_hash' : '' }
@@ -134,18 +131,10 @@ def findmyinfo(request):
             email = studentDB.filter(email = data['email'])
             stdnum = studentDB.filter(stdnum = data['stdnum'])
             if email[0]==stdnum[0] :
+                #email 과 stdnum이 한 사람의 정보일 경우 진행
                 #반환값을 만들고 해당 값을 반환하면됨
-                email_dump = json.dumps(data['email'], sort_keys = True).encode()
-                email_hash = hashlib.sha256(email_dump).hexdigest()
                 return JsonResponse({'email':email_hash}, status=201)
             else :
                 return JsonResponse({'msg':'email과 stdnum이 일치하지 않습니다.'}, status=400)
         else :
-            return JsonResponse({'msg': '가입되지 않은 stdnum입니다'}, status=400)
-            '''
-            email_dump = json.dumps(email, sort_keys = True).encode()
-            email_hash = hashlib.sha256(email_dump).hexdigest()
-            email_data_json = { 'email' : '' }
-            email_data_json['email'] = email_hash
-            data['email'] = email_hash
-            '''
+            return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
