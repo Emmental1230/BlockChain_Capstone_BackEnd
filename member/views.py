@@ -39,7 +39,7 @@ def member_list(request):
             raise exceptions.ParseError("key 정보를 찾을 수 없습니다.")
 
         api_key = request.GET.get('key', None)
-        if api_key != '6A7F2B72EC2BEFEE1CDB125A9CE96E8BFCAC2484AD7A068024FC1B946D38BFFE' :
+        if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :
             raise exceptions.ParseError("key 정보가 잘못되었습니다.")
             return JsonResponse({'msg':'Key is 잘못'}, status=400)
 
