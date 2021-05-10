@@ -15,17 +15,34 @@ import base62
 #import bcrypt
 # Create your views here.
 
-
 @csrf_exempt
 def member_list(request):
     #모든 학생들 조회
     if request.method == 'GET':
-        members = Member.objects.all()
-        serializer = MemberSerializer(members, many=True)
-        return JsonResponse(serializer.data, safe=False, status=201)
+
+        if not 'key' in request.GET :
+            raise exceptions.ParseError("key 정보를 찾을 수 없습니다.")
+
+        hash_key = request.GET.get('key', None)
+        print(hash_key)
+
+
+        obj = Member.objects.get(email_hash=hash_key)
+
+        serializer = MemberSerializer(obj)
+        return JsonResponse(serializer.data, status=201, safe=False)
+
 
     #회원가입 요청
     elif request.method == 'POST':
+        if not 'key' in request.GET :
+            raise exceptions.ParseError("key 정보를 찾을 수 없습니다.")
+
+        api_key = request.GET.get('key', None)
+        if api_key != '6A7F2B72EC2BEFEE1CDB125A9CE96E8BFCAC2484AD7A068024FC1B946D38BFFE' :
+            raise exceptions.ParseError("key 정보가 잘못되었습니다.")
+            return JsonResponse({'msg':'Key is 잘못'}, status=400)
+
         data = JSONParser().parse(request)
         studentDB = Member.objects.all()
 
@@ -37,16 +54,11 @@ def member_list(request):
             return JsonResponse({'msg':'Email is already exists'}, status=400)
         elif studentDB.filter(stdnum = stdnum).exists() :
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
-        
+
         #email 해시 하는 부분
 
-        #ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         salt = base62.encodebytes(os.urandom(16))
         salt = bytes(salt, encoding="utf-8")
-        #for i in range(16):
-        #    salt.append(random.choice(ALPHABET))
-
-        #salt_string = "".join(salt)
 
         email_dump = json.dumps(email, sort_keys = True).encode()
         email_dump += salt
@@ -63,9 +75,10 @@ def member_list(request):
             serializer.save()
             return JsonResponse(email_data_json, status=201)
 
-        return JsonResponse(serializer.errors, status=400)       
+        return JsonResponse(serializer.errors, status=400)
+       
 
-
+'''
 @csrf_exempt
 def member(request, word):
     #학생 수정
@@ -82,7 +95,7 @@ def member(request, word):
             serializer.save()
             return JsonResponse(serializer.data, status=201)
         return JsonResponse(serializer.errors, status=400)   
-
+'''
 
 @csrf_exempt
 def run_python(request): 
