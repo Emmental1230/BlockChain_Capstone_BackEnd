@@ -86,6 +86,14 @@ def run_python(request):
 def findmyinfo(request):
     #email, stdnum 받을 경우, 해당 key값 반환
     if request.method == 'POST':
+
+        if not 'key' in request.GET :   #key가 없을 경우 error 출력
+            return JsonResponse({'msg' : 'params error'}, status=400)
+
+        api_key = request.GET.get('key', None)
+        if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :  #이 주석 보면 저 해싱값이 뭘 뜻하는건지 써줘 기우
+            return JsonResponse({'msg' : 'Key error'}, status=400)
+
         data = JSONParser().parse(request)
         studentDB = Member.objects.all()
 
