@@ -21,27 +21,26 @@ def member_list(request):
     if request.method == 'GET':
 
         if not 'key' in request.GET :
-            raise exceptions.ParseError("key 정보를 찾을 수 없습니다.")
+            return JsonResponse({'msg' : 'params error'}, status=400)
 
         hash_key = request.GET.get('key', None)
-        print(hash_key)
 
+        try :
+            obj = Member.objects.get(email_hash=hash_key)
 
-        obj = Member.objects.get(email_hash=hash_key)
-
-        serializer = MemberSerializer(obj)
-        return JsonResponse(serializer.data, status=201, safe=False)
-
+            serializer = MemberSerializer(obj)
+            return JsonResponse(serializer.data, status=201, safe=False)
+        except :
+            return JsonResponse({'msg' : 'Key is not exist'}, status=400)
 
     #회원가입 요청
     elif request.method == 'POST':
         if not 'key' in request.GET :
-            raise exceptions.ParseError("key 정보를 찾을 수 없습니다.")
+            return JsonResponse({'msg' : 'params error'}, status=400)
 
         api_key = request.GET.get('key', None)
         if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :
-            raise exceptions.ParseError("key 정보가 잘못되었습니다.")
-            return JsonResponse({'msg':'Key is 잘못'}, status=400)
+            return JsonResponse({'msg' : 'Key error'}, status=400)
 
         data = JSONParser().parse(request)
         studentDB = Member.objects.all()
