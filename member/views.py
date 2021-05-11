@@ -89,7 +89,6 @@ def findmyinfo(request):
 
         if not 'key' in request.GET :   #key가 없을 경우 error 출력
             return JsonResponse({'msg' : 'params error'}, status=400)
-
         api_key = request.GET.get('key', None)
         if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :  #이 주석 보면 저 해싱값이 뭘 뜻하는건지 써줘 기우
             return JsonResponse({'msg' : 'Key error'}, status=400)
@@ -104,7 +103,7 @@ def findmyinfo(request):
             #stdnum부분이 공란일 경우 or
             #stdnum가 있고 email, stdnum이 한사람의 정보일 경우
             if not data['stdnum']  or std.stdnum == data['stdnum'] :
-                return JsonResponse({'email_hash': std.email_hash })
+                return JsonResponse({'email_hash': std.email_hash }, status=201)
             else :
                 return JsonResponse({'msg':'email과 stdnum이 일치하지 않습니다.'}, status=400)
         else :
