@@ -88,18 +88,18 @@ def findmyinfo(request):
     if request.method == 'POST':
         data = JSONParser().parse(request)
         studentDB = Member.objects.all()
-        studentVals = Member.objects.values()
-        
+
         #email 정보가 DB에 있는지 확인
         if studentDB.filter(email = data['email']).exists() :
-            stdinfo = studentVals[0]['id']     #있다면, 해당 학생 id 저장
+            std = Member.objects.get(email = data['email'])     #해당 학생 정보 저장
+
             #stdnum부분이 공란일 경우 or
-            #stdnum가 있고, email, stdnum이 한사람의 정보일 경우
-            if not data['stdnum']  or Member.objects.get(id=stdinfo).stdnum == data['stdnum'] :
-                return JsonResponse({'email_hash':Member.objects.get(id=stdinfo).email_hash})
+            #stdnum가 있고 email, stdnum이 한사람의 정보일 경우
+            if not data['stdnum']  or std.stdnum == data['stdnum'] :
+                return JsonResponse({'email_hash': std.email_hash })
             else :
                 return JsonResponse({'msg':'email과 stdnum이 일치하지 않습니다.'}, status=400)
-        else :  
+        else :
             return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
 
 
@@ -108,7 +108,6 @@ def findmyinfo(request):
 def member(request, word):
     #학생 수정
     obj = Member.objects.get(email_hash=word)
-
     if request.method == 'GET':
         serializer = MemberSerializer(obj)
         return JsonResponse(serializer.data, status=201, safe=False)  
