@@ -15,17 +15,33 @@ import base62
 #import bcrypt
 # Create your views here.
 
-
 @csrf_exempt
 def member_list(request):
     #모든 학생들 조회
     if request.method == 'GET':
-        members = Member.objects.all()
-        serializer = MemberSerializer(members, many=True)
-        return JsonResponse(serializer.data, safe=False, status=201)
+
+        if not 'key' in request.GET :
+            return JsonResponse({'msg' : 'params error'}, status=400)
+
+        hash_key = request.GET.get('key', None)
+
+        try :
+            obj = Member.objects.get(email_hash=hash_key)
+
+            serializer = MemberSerializer(obj)
+            return JsonResponse(serializer.data, status=201, safe=False)
+        except :
+            return JsonResponse({'msg' : 'Key is not exist'}, status=400)
 
     #회원가입 요청
     elif request.method == 'POST':
+        if not 'key' in request.GET :
+            return JsonResponse({'msg' : 'params error'}, status=400)
+
+        api_key = request.GET.get('key', None)
+        if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :
+            return JsonResponse({'msg' : 'Key error'}, status=400)
+
         data = JSONParser().parse(request)
         studentDB = Member.objects.all()
 
@@ -37,16 +53,11 @@ def member_list(request):
             return JsonResponse({'msg':'Email is already exists'}, status=400)
         elif studentDB.filter(stdnum = stdnum).exists() :
             return JsonResponse({'msg':'stdnum is already exists'}, status=400)
-        
+
         #email 해시 하는 부분
 
-        #ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         salt = base62.encodebytes(os.urandom(16))
         salt = bytes(salt, encoding="utf-8")
-        #for i in range(16):
-        #    salt.append(random.choice(ALPHABET))
-
-        #salt_string = "".join(salt)
 
         email_dump = json.dumps(email, sort_keys = True).encode()
         email_dump += salt
@@ -66,6 +77,7 @@ def member_list(request):
             return JsonResponse({'msg' :'data format이 일치하지 않습니다.'}, status=400)
 
 
+'''
 @csrf_exempt
 def member(request, word):
     #학생 수정
@@ -74,7 +86,7 @@ def member(request, word):
     if request.method == 'GET':
         serializer = MemberSerializer(obj)
         return JsonResponse(serializer.data, status=201, safe=False)  
-
+'''
 
 @csrf_exempt
 def run_python(request): 
