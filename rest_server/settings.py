@@ -29,9 +29,6 @@ SECRET_KEY = 'django-insecure-dp9&@dhs1sg-(99-4hav8!7k+j1@$h$ui)0@mi3=ezn8q!ytal
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com",
-                 "www.apiupass.com", "www.kyonggiupass.com", ".kyonggiupass.com"]
-
 #ALLOWED_HOSTS = ["101.101.218.36"]
 
 
