@@ -75,9 +75,7 @@ async def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
         simple_pw = request.GET.get('SimplePassword', None)
-        command = ["sh","/home/caps/indy/start_docker/api.sh","8932cb9bd5fb",email, simple_pw]
-        
-
+        command = ["sh","/home/caps/indy/start_docker/api.sh","ed1ff7a2fc14",email, simple_pw]
         try:
             process = Popen(command, stdout=PIPE, stderr=STDOUT)
             process.wait()
