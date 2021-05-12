@@ -79,7 +79,7 @@ async def run_python(request):
         try:
             process = Popen(command, stdout=PIPE, stderr=STDOUT)
             process.wait()
-            with open('/home/caps/BlockChain_Capstone_BackEnd/data.json')as f:
+            with open('/home/caps/indy/start_docker/data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
                 did = json_data['did']
