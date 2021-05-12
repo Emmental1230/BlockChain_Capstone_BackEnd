@@ -77,11 +77,15 @@ def run_python(request):
         simple_pw = request.GET.get('SimplePassword', None)
         
         #command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 test@kyonggi.ac.kr 123aa"
-        command = ['sh','/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', "test@kyonggi.ac.kr", "simple_pwZ"]
+        # command = ['sh','/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', "test@kyonggi.ac.kr", "simple_pwZ"]
+        program_name = "sh"
+        arguments = ['/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', "test@kyonggi.ac.kr", "simple_pwZ"]
+        command = [program_name]
+        command.extend(arguments)
         # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
         try:
             # process = os.popen("sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 test@kyonggi.ac.kr simple_pwZ").read()
-            process = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT)
+            process = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT).communicate()
             # process = Popen(command,shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=False)
             #process = Popen(command, stdout=PIPE, stderr=STDOUT)
             process.wait()
