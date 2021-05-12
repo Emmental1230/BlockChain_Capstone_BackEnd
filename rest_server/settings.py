@@ -29,7 +29,8 @@ SECRET_KEY = 'django-insecure-dp9&@dhs1sg-(99-4hav8!7k+j1@$h$ui)0@mi3=ezn8q!ytal
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com","www.kyonggiupass.com",".kyonggiupass.com"]
+ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com",
+                 "www.apiupass.com", "www.kyonggiupass.com", ".kyonggiupass.com"]
 
 #ALLOWED_HOSTS = ["101.101.218.36"]
 
@@ -62,7 +63,8 @@ MIDDLEWARE = [
 ]
 
 
-CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:8080', 'http://localhost:8080','https://www.kyonggiupass.com','http://www.kyonggiupass.com']
+CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:8080', 'http://localhost:8080',
+                         'https://www.kyonggiupass.com', 'http://www.kyonggiupass.com']
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'rest_server.urls'
@@ -88,25 +90,26 @@ WSGI_APPLICATION = 'rest_server.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-#DB sqlite3에 해당하는 코드는 지우지 말 것!
+# DB sqlite3에 해당하는 코드는 지우지 말 것!
 
 DATABASES = {
     'default': {
-        'ENGINE'   : 'django.db.backends.mysql',
-        'NAME'     : 'caps_db',
-        'USER'     : 'root',
-        'PASSWORD' : 'root',
-        'HOST'     : '',
-        'PORT'     : '',
-        'OPTIONS'  : {'charset': 'utf8mb4'},
-   'TEST': {
-   'CHARSET'  : 'utf8mb4',
-   'COLLATION': 'utf8_general_ci'
-   }
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'caps_db',
+        'USER': 'root',
+        'PASSWORD': 'root',
+        'HOST': '',
+        'PORT': '',
+        'OPTIONS': {'charset': 'utf8mb4'},
+        'TEST': {
+            'CHARSET': 'utf8mb4',
+            'COLLATION': 'utf8_general_ci'
+        }
     }
 }
 
-ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com","www.kyonggiupass.com",".kyonggiupass.com", "118.67.134.159"]
+ALLOWED_HOSTS = ["61.97.189.107", ".apiupass.com", "www.apiupass.com",
+                 "www.kyonggiupass.com", ".kyonggiupass.com", "118.67.134.159", "127.0.0.1", "localhost", "0.0.0.0:8000"]
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -141,7 +144,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = False      #server시간 맞추기 위한 설정
+USE_TZ = False  # server시간 맞추기 위한 설정
 
 
 # Static files (CSS, JavaScript, Images)
