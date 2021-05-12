@@ -71,7 +71,7 @@ def member_list(request):
 @csrf_exempt
 @sync_to_async
 @async_to_sync
-async def run_python(request):
+def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
         simple_pw = request.GET.get('SimplePassword', None)
@@ -79,8 +79,8 @@ async def run_python(request):
         command = ["sh","/home/caps/indy/start_docker/api.sh","ed1ff7a2fc14", email, simple_pw]
         # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
         try:
-            process = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT)
-            process.wait()
+            process = Popen(command, stdout=PIPE, stderr=STDOUT)
+            #process.wait()
             with open('/home/caps/indy/start_docker/data.json')as f:
                 json_data = json.load(f)
                 #email = json_data['email']
@@ -88,8 +88,8 @@ async def run_python(request):
 
         except Exception as e:
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
-        return JsonResponse({'email':email,'simple_pw':simple_pw})
-        #return JsonResponse(json_data, status=201)
+        #return JsonResponse({'email':email,'simple_pw':simple_pw})
+        return JsonResponse(json_data, status=201)
 
 
 @csrf_exempt
