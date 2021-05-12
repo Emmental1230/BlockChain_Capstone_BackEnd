@@ -79,7 +79,7 @@ def run_python(request):
         #command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 test@kyonggi.ac.kr 123aa"
         # command = ['sh','/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', "test@kyonggi.ac.kr", "simple_pwZ"]
         program_name = "sh"
-        arguments = ['/home/caps/indy/start_docker/api.sh','5ca359722c6b', "test@kyonggi.ac.kr"]
+        arguments = ['/home/caps/indy/start_docker/api.sh','27f825c37fe8', "test@kyonggi.ac.kr"]
         command = [program_name]
         command.extend(arguments)
         # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
