@@ -7,9 +7,9 @@ from .serializers import MemberSerializer
 from subprocess import Popen, PIPE, STDOUT 
 from django.http import HttpResponse
 import subprocess, hashlib, json, os, random, base62
-#import asyncio
-#from asgiref.sync import async_to_sync
-#from asgiref.sync import sync_to_async
+import asyncio
+from asgiref.sync import async_to_sync
+from asgiref.sync import sync_to_async
 
 #import bcrypt
 # Create your views here.
@@ -69,40 +69,38 @@ def member_list(request):
 
 
 @csrf_exempt
-#@sync_to_async
-#@async_to_sync
-def run_python(request):
+@sync_to_async
+@async_to_sync
+async def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
         simple_pw = request.GET.get('SimplePassword', None)
-        
-        #command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 test@kyonggi.ac.kr 123aa"
-        # command = ['sh','/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', "test@kyonggi.ac.kr", "simple_pwZ"]
-        program_name = "sh"
-        arguments = ['/home/caps/indy/start_docker/api.sh','27f825c37fe8', "test@kyonggi.ac.kr"]
-        command = [program_name]
-        command.extend(arguments)
-        # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
+        command = ["sh","/home/caps/docker/Blockchain_Capstone_Indy/start_docker/api.sh","ed1ff7a2fc14",email, simple_pw]
+        #command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
+        #command = ["sh", "/home/caps/docker/Blockchain_Capstone_Indy/start_docker/api.sh", "f57bccba3b28","asdfsadf@kyonggi.ac.kr"]
         try:
-            # process = os.popen("sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 test@kyonggi.ac.kr simple_pwZ").read()
-            process = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT).communicate()
-            # process = Popen(command,shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=False)
-            #process = Popen(command, stdout=PIPE, stderr=STDOUT)
-            # process.wait()
-            with open('/home/caps/indy/start_docker/data.json')as f:
+            process = Popen(command, stdout=PIPE, stderr=STDOUT)
+            process.wait()
+#            output = process.stdout.read()
+#            print(output)
+#            exitstatus = process.poll()
+#            pwd = os.path.realpath(__file__)
+########################################################
+
+#######################################################
+            with open('/home/caps/BlockChain_Capstone_BackEnd/data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
                 did = json_data['did']
 
-        except Exception as e:
-            return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
-        # html="<html><body>"+str(process)+"</body></html>"
-        # return HttpResponse(html)
-        #return process
-        #return JsonResponse({'type':type(simple_pw)})
-       
-        return JsonResponse(json_data, status=201)
+                #result = {"status": "Failed  ", "output":str(output)}
 
+
+        except Exception as e:
+            #result =  {"status": "failed_Exception"  , "output":str(e)}
+            return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
+
+        return JsonResponse(json_data, status=201)
 
 @csrf_exempt
 def findmyinfo(request):
