@@ -88,7 +88,7 @@ def run_python(request):
             process = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT).communicate()
             # process = Popen(command,shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=False)
             #process = Popen(command, stdout=PIPE, stderr=STDOUT)
-            process.wait()
+            # process.wait()
             with open('/home/caps/indy/start_docker/data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
