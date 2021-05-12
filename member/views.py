@@ -80,14 +80,15 @@ def run_python(request):
         command = ['sh','/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', "test@kyonggi.ac.kr", "simple_pwZ"]
         # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
         try:
-            process = os.popen("sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 test@kyonggi.ac.kr simple_pwZ").read()
+            # process = os.popen("sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 test@kyonggi.ac.kr simple_pwZ").read()
+            process = Popen(command, stdout=PIPE, stderr=STDOUT)
             # process = Popen(command,shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=False)
             #process = Popen(command, stdout=PIPE, stderr=STDOUT)
-            #process.wait()
-            # with open('/home/caps/indy/start_docker/data.json')as f:
-            #     json_data = json.load(f)
-            #     #email = json_data['email']
-            #     did = json_data['did']
+            process.wait()
+            with open('/home/caps/indy/start_docker/data.json')as f:
+                json_data = json.load(f)
+                email = json_data['email']
+                did = json_data['did']
 
         except Exception as e:
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
