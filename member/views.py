@@ -84,15 +84,15 @@ def run_python(request):
             # process = Popen(command,shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=False)
             #process = Popen(command, stdout=PIPE, stderr=STDOUT)
             #process.wait()
-            with open('/home/caps/indy/start_docker/data.json')as f:
-                json_data = json.load(f)
-                #email = json_data['email']
-                did = json_data['did']
+            # with open('/home/caps/indy/start_docker/data.json')as f:
+            #     json_data = json.load(f)
+            #     #email = json_data['email']
+            #     did = json_data['did']
 
         except Exception as e:
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
-        #html="<html><body>"+str(json_data)+"</body></html>"
-        #return HttpResponse(html)
+        html="<html><body>"+str(process)+"</body></html>"
+        return HttpResponse(html)
         #return process
         #return JsonResponse({'type':type(simple_pw)})
        
