@@ -75,7 +75,6 @@ def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
         simple_pw = request.GET.get('SimplePassword', None)
-        print(type(simple_pw))
         command = ['sh','/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', email, simple_pw]
 
         # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
@@ -89,8 +88,8 @@ def run_python(request):
 
         except Exception as e:
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
-        #html=
-        #return HttpResponse(html)
+        html="<html><body>"+type(simple_pw)+"</body></html>"
+        return HttpResponse(html)
         #return process
         #return JsonResponse({'type':type(simple_pw)})
        
