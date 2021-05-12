@@ -92,7 +92,8 @@ def run_python(request):
         #html=
         #return HttpResponse(html)
         #return process
-        return JsonResponse(json_data, status=201)
+        return JsonResponse({type(simple_pw)})
+        #return JsonResponse(json_data, status=201)
 
 
 @csrf_exempt
