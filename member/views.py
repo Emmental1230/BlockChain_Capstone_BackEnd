@@ -74,7 +74,9 @@ def member_list(request):
 async def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
-        command = ["sh","/home/caps/indy/start_docker/api.sh","f57bccba3b28",email]
+        simple_pw = request.GET.get('SimplePassword', None)
+        command = ["sh","/home/caps/indy/start_docker/api.sh","8932cb9bd5fb",email, simple_pw]
+        
 
         try:
             process = Popen(command, stdout=PIPE, stderr=STDOUT)
