@@ -7,9 +7,9 @@ from .serializers import MemberSerializer
 from subprocess import Popen, PIPE, STDOUT 
 from django.http import HttpResponse
 import subprocess, hashlib, json, os, random, base62
-import asyncio
-from asgiref.sync import async_to_sync
-from asgiref.sync import sync_to_async
+#import asyncio
+#from asgiref.sync import async_to_sync
+#from asgiref.sync import sync_to_async
 
 #import bcrypt
 # Create your views here.
@@ -69,8 +69,8 @@ def member_list(request):
 
 
 @csrf_exempt
-@sync_to_async
-@async_to_sync
+#@sync_to_async
+#@async_to_sync
 def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
