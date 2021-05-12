@@ -80,8 +80,8 @@ def run_python(request):
         command = ['sh','/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', "test@kyonggi.ac.kr", "simple_pwZ"]
         # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
         try:
-            #process = os.popen()
-            process = Popen(command,shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=False)
+            process = os.popen("sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 test@kyonggi.ac.kr 123aa")
+            # process = Popen(command,shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=False)
             #process = Popen(command, stdout=PIPE, stderr=STDOUT)
             #process.wait()
             with open('/home/caps/indy/start_docker/data.json')as f:
