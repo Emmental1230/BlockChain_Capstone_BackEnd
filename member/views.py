@@ -81,7 +81,8 @@ def run_python(request):
         # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
         try:
             #process = os.popen()
-            process = Popen(command, stdout=PIPE, stderr=STDOUT,bufsize=10)
+            process = Popen(command,shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=False)
+            #process = Popen(command, stdout=PIPE, stderr=STDOUT)
             #process.wait()
             with open('/home/caps/indy/start_docker/data.json')as f:
                 json_data = json.load(f)
