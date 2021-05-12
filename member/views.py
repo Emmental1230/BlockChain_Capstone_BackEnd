@@ -76,11 +76,11 @@ def run_python(request):
         email = request.GET.get('email', None)
         simple_pw = request.GET.get('SimplePassword', None)
 
-        command = ["sh","/home/caps/indy/start_docker/api.sh","ed1ff7a2fc14", email]
-        cmd1 = [simple_pw]
+        command = ['sh','/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', email, simple_pw]
+
         # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
         try:
-            process = Popen(command+cmd1, stdout=PIPE, stderr=STDOUT)
+            process = Popen(command, stdout=PIPE, stderr=STDOUT)
             #process.wait()
             with open('/home/caps/indy/start_docker/data.json')as f:
                 json_data = json.load(f)
@@ -91,7 +91,7 @@ def run_python(request):
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
         #html=
         #return HttpResponse(html)
-        return process
+        #return process
         return JsonResponse(json_data, status=201)
 
 
