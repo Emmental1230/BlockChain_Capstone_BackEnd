@@ -92,7 +92,7 @@ def run_python(request):
         #html=
         #return HttpResponse(html)
         #return process
-        return JsonResponse({type(simple_pw)})
+        return JsonResponse({'type':type(simple_pw)})
         #return JsonResponse(json_data, status=201)
 
 
