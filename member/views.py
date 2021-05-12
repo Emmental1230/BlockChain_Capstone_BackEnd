@@ -88,7 +88,9 @@ def run_python(request):
 
         except Exception as e:
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
-        return JsonResponse({'proc':process})
+        #html=
+        #return HttpResponse(html)
+        return process
         return JsonResponse(json_data, status=201)
 
 
