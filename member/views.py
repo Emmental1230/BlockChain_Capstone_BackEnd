@@ -75,11 +75,13 @@ def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
         simple_pw = request.GET.get('SimplePassword', None)
+        
         command = ['sh','/home/caps/indy/start_docker/api.sh','ed1ff7a2fc14', email, simple_pw]
 
         # command = "sh /home/caps/indy/start_docker/api.sh ed1ff7a2fc14 " + email +" "+ simple_pw
         try:
-            process = Popen(command, stdout=PIPE, stderr=STDOUT)
+            #process = os.popen()
+            process = Popen(command, stdout=PIPE, stderr=STDOUT,bufsize=10)
             #process.wait()
             with open('/home/caps/indy/start_docker/data.json')as f:
                 json_data = json.load(f)
@@ -88,8 +90,8 @@ def run_python(request):
 
         except Exception as e:
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
-        html="<html><body>"+str(process)+"</body></html>"
-        return HttpResponse(html)
+        #html="<html><body>"+str(json_data)+"</body></html>"
+        #return HttpResponse(html)
         #return process
         #return JsonResponse({'type':type(simple_pw)})
        
