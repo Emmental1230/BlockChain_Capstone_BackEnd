@@ -74,12 +74,11 @@ def member_list(request):
 async def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
-        command = ["sh","/home/caps/docker/Blockchain_Capstone_Indy/start_docker/api.sh","f57bccba3b28",email]
+        command = ["sh","/home/caps/indy/start_docker/api.sh","f57bccba3b28",email]
 
         try:
             process = Popen(command, stdout=PIPE, stderr=STDOUT)
             process.wait()
-
             with open('/home/caps/BlockChain_Capstone_BackEnd/data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
