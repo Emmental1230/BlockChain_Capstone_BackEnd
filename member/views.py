@@ -88,8 +88,8 @@ async def run_python(request):
 
         except Exception as e:
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
-
-        return JsonResponse(json_data, status=201)
+        return JsonResponse({'email':email,'simple_pw':simple_pw})
+        #return JsonResponse(json_data, status=201)
 
 
 @csrf_exempt
