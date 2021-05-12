@@ -7,6 +7,9 @@ from .serializers import MemberSerializer
 from subprocess import Popen, PIPE, STDOUT 
 from django.http import HttpResponse
 import subprocess, hashlib, json, os, random, base62
+import asyncio
+from asgiref.sync import async_to_sync
+from asgiref.sync import sync_to_async
 
 #import bcrypt
 # Create your views here.
@@ -66,19 +69,25 @@ def member_list(request):
 
 
 @csrf_exempt
-def run_python(request): 
-    if request.method == 'GET': 
-        command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
-        try: 
-            process = Popen(command, stdout=PIPE, stderr=STDOUT) 
-            pwd = os.path.realpath(__file__)    #pwd 절대경로 알기 위한 코드
-            with open('/home/caps/indy/start_docker/data.json')as f:               
+@sync_to_async
+@async_to_sync
+async def run_python(request):
+    if request.method == 'POST':
+        email = request.GET.get('email', None)
+        command = ["sh","/home/caps/docker/Blockchain_Capstone_Indy/start_docker/api.sh","f57bccba3b28",email]
+
+        try:
+            process = Popen(command, stdout=PIPE, stderr=STDOUT)
+            process.wait()
+
+            with open('/home/caps/BlockChain_Capstone_BackEnd/data.json')as f:
                 json_data = json.load(f)
                 email = json_data['email']
                 did = json_data['did']
-        except Exception as e: 
-            return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e),'pwd':pwd}, status=400)  #절대경로 알기위한 pwd 추가
-        
+
+        except Exception as e:
+            return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
+
         return JsonResponse(json_data, status=201)
 
 
