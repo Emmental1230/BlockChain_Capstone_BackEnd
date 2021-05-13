@@ -115,21 +115,21 @@ def findmyinfo(request):
     #email, stdnum 받을 경우, 해당 key값 반환
     if request.method == 'POST':
         check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASS'.encode()))
+        stdnum = request.GET.get('stdnum', None)
+        major = request.GET.get('major', None)
+        name = request.GET.get('name', None)
         email = request.GET.get('email', None)
 
+        info_dump = str(stdnum) + str(major) + str(name) + str(email)
+        info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
         studentDB = Member.objects.all()
 
         #email 정보가 DB에 있는지 확인
-        if studentDB.filter(email = email).exists() :
-            std = Member.objects.get(email = email)     #해당 학생 정보 저장
+        if studentDB.filter(info_hash = info_hash).exists() :
+            std = Member.objects.get(info_hash = info_hash)     #해당 학생 정보 저장
             return JsonResponse({'user_key': std.user_key }, status=201)
         else :
             return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
-
-
-
-
-
 
 '''
 @csrf_exempt
