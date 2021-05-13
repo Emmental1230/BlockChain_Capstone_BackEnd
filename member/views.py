@@ -84,8 +84,8 @@ async def run_python(request):
         try:
             process = Popen(command, stdout=PIPE, stderr=STDOUT)
             process.wait()
-#            output = process.stdout.read()
-#            print(output)
+            output = process.stdout.read()
+            print("output:", output)
 #            exitstatus = process.poll()
 #            pwd = os.path.realpath(__file__)
 ########################################################
