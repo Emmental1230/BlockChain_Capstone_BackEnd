@@ -108,7 +108,7 @@ def findmyinfo(request):
         # api_key = request.GET.get('key', None)
         # if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :  #이 주석 보면 저 해싱값이 뭘 뜻하는건지 써줘 기우
         #     return JsonResponse({'msg' : 'Key error'}, status=400)
-        check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASSS'.encode()))
+        check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASS'.encode()))
         email = request.GET.get('email', None)
 
         studentDB = Member.objects.all()
@@ -116,9 +116,9 @@ def findmyinfo(request):
         #email 정보가 DB에 있는지 확인
         if studentDB.filter(email = email).exists() :
             std = Member.objects.get(email = email)     #해당 학생 정보 저장
-            return JsonResponse({'user_key': std.user_key,   }, status=201)
+            return JsonResponse({'user_key': std.user_key }, status=201)
         else :
-            return JsonResponse({'msg': '가입되지 않은 email입니다.', 'hash1': str(hashlib.sha256('이팔청춘의 U-PASSS'.encode()).hexdigest()), 'hash2':str(hashlib.sha256('이팔청춘의 U-PASSS'.encode()))}, status=400)
+            return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
 
 
 
