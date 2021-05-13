@@ -68,6 +68,9 @@ def member_list(request):
 
         return JsonResponse(serializer.errors, status=400)
 
+@sync_to_async
+def get_all_users():
+    return User.objects.all()
 
 @csrf_exempt
 @sync_to_async
@@ -77,7 +80,7 @@ async def run_python(request):
         if not 'key' in request.GET :
             return JsonResponse({'msg' : 'parmas error'}, status=400)
 
-        studentDB = Member.objects.all()
+        studentDB = get_all_users()
         api_key = request.GET.get('key', None)  #key 추출
 
         if studentDB.filter(user_key = api_key).exists() :
@@ -110,7 +113,7 @@ def findmyinfo(request):
         check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASS'.encode()))
         email = request.GET.get('email', None)
 
-        studentDB = sync_to_async(Member.objects.all())
+        studentDB = Member.objects.all()
 
         #email 정보가 DB에 있는지 확인
         if studentDB.filter(email = email).exists() :
