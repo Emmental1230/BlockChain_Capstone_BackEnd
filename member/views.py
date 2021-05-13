@@ -75,7 +75,7 @@ async def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
         simple_pw = request.GET.get('SimplePassword', None)
-        command = ["/bin/sh","../indy/start_docker/api.sh","1b57c8002249", email, simple_pw]
+        command = ["sh","../indy/start_docker/api.sh","1b57c8002249", email, simple_pw]
         # command = ["docker","exec","-itu", "0", "1b57c8002249", "python3 /home/indy/generate_did.py",  ]
         # command = 'docker exec -itu 0 1b57c8002249 python3 /home/indy/generate_did.py 111 111'.split()
         print("command: ", command)
@@ -84,7 +84,7 @@ async def run_python(request):
         #command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
         #command = ["sh", "/home/caps/docker/Blockchain_Capstone_Indy/start_docker/api.sh", "f57bccba3b28","asdfsadf@kyonggi.ac.kr"]
         try:
-            process = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            process = Popen(command, stdout=PIPE, stderr=PIPE)
             # process = Popen(command, stdout=PIPE)
 
             process.wait()
