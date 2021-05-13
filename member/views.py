@@ -15,33 +15,21 @@ from asgiref.sync import sync_to_async
 # Create your views here.
 
 @csrf_exempt
+#임시키 확인
+def check_tempkey(request, compare_key):
+    if not 'key' in request.GET :
+        return JsonResponse({'msg' : 'parmas error'}, status=400)
+
+    api_key = request.GET.get('key', None)
+    
+    if api_key != compare_key:
+        return JsonResponse({'msg' : 'Key is error'}, status=400)
+
+@csrf_exempt
 def member_list(request):
-    #모든 학생들 조회
-    if request.method == 'GET':
-
-        if not 'key' in request.GET :
-            return JsonResponse({'msg' : 'parmas error'}, status=400)
-
-        hash_key = request.GET.get('key', None)
-        print(hash_key)
-
-        try :
-            obj = Member.objects.get(user_key=hash_key)
-
-            serializer = MemberSerializer(obj)
-            return JsonResponse(serializer.data, status=201, safe=False)
-        except :
-            return JsonResponse({'msg' : 'Key is error'}, status=400)
-
     #회원가입 요청
-    elif request.method == 'POST':
-        if not 'key' in request.GET :
-            return JsonResponse({'msg' : 'parmas error'}, status=400)
-
-        api_key = request.GET.get('key', None)
-        if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :
-            return JsonResponse({'msg' : 'Key is error'}, status=400)
-
+    if request.method == 'POST':
+        check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASSS'))
         stdnum = request.GET.get('stdnum', None)
         major = request.GET.get('major', None)
         name = request.GET.get('name', None)
@@ -53,20 +41,24 @@ def member_list(request):
         if studentDB.filter(email = email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
 
-        #user_key 해시 하는 부분
+        #info_hash 해시 하는 부분
+        info_dump = str(stdnum) + str(major) + str(name) + str(email)
+        info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
 
+
+        #user_key 해시 하는 부분
         salt = base62.encodebytes(os.urandom(16))
         salt = bytes(salt, encoding="utf-8")
 
-        email_dump = str(stdnum) + str(major) + str(name) + str(email) + str(salt)
+        email_dump = info_dump + str(salt)
         user_key = hashlib.sha256(email_dump.encode('utf-8')).hexdigest()
         user_key_json = { 'user_key' : '' }
         user_key_json['user_key'] = user_key
 
-        data = { 'email' : '', 'user_key' : '' }
+        data = { 'email' : '', 'info_hash' : '', 'user_key' : '' }
         data['email'] = email
+        data['info_hash'] = info_hash
         data['user_key'] = user_key
-
 
         serializer = MemberSerializer(data=data)
 
@@ -77,13 +69,10 @@ def member_list(request):
         return JsonResponse(serializer.errors, status=400)
 
 
-
-
-
 @csrf_exempt
 @sync_to_async
 @async_to_sync
-async def run_python(request):
+async def get_did(request):
     if request.method == 'POST':
         if not 'key' in request.GET :
             return JsonResponse({'msg' : 'parmas error'}, status=400)
@@ -114,12 +103,12 @@ def findmyinfo(request):
     #email, stdnum 받을 경우, 해당 key값 반환
     if request.method == 'POST':
 
-        if not 'key' in request.GET :   #key가 없을 경우 error 출력
-            return JsonResponse({'msg' : 'params error'}, status=400)
-        api_key = request.GET.get('key', None)
-        if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :  #이 주석 보면 저 해싱값이 뭘 뜻하는건지 써줘 기우
-            return JsonResponse({'msg' : 'Key error'}, status=400)
-
+        # if not 'key' in request.GET :   #key가 없을 경우 error 출력
+        #     return JsonResponse({'msg' : 'params error'}, status=400)
+        # api_key = request.GET.get('key', None)
+        # if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :  #이 주석 보면 저 해싱값이 뭘 뜻하는건지 써줘 기우
+        #     return JsonResponse({'msg' : 'Key error'}, status=400)
+        check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASSS'))
         email = request.GET.get('email', None)
 
         studentDB = Member.objects.all()
