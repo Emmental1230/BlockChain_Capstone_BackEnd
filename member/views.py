@@ -103,7 +103,7 @@ async def run_python(request):
             #result =  {"status": "failed_Exception"  , "output":str(e)}
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
 
-        return JsonResponse({'output':output}, status=201)
+        return JsonResponse({'output':str(output)}, status=201)
 
 @csrf_exempt
 def findmyinfo(request):
