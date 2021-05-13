@@ -75,7 +75,7 @@ async def run_python(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)
         simple_pw = request.GET.get('SimplePassword', None)
-        command = ["sh","/home/caps/docker/Blockchain_Capstone_Indy/start_docker/api.sh","1b57c8002249", email, simple_pw]
+        command = ["/bin/sh","/home/caps/docker/Blockchain_Capstone_Indy/start_docker/api.sh","1b57c8002249", email, simple_pw]
         print("command: ", command)
         print("email: ", email)
         print("simple_pw:", simple_pw)
