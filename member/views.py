@@ -86,7 +86,7 @@ def checkDB(api_key):
 
 
 @csrf_exempt
-def run_python(request):
+def get_did(request):
     if request.method == 'POST':
         if not 'key' in request.GET :
             return JsonResponse({'msg' : 'parmas error'}, status=400)

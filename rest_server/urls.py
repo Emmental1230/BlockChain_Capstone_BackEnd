@@ -35,7 +35,7 @@ urlpatterns = [
 
     path('api/members/', views.member_list),
     #path('api/members/<word>', views.member),
-    path('api/runpython/', views.run_python),
+    path('api/getdid/', views.get_did),
     path('api/findmyinfo/', views.findmyinfo),
     #path('readdid/', readDID),
 ]
