@@ -80,8 +80,8 @@ async def did_shell(api_key, request):
         process.wait()  #did 발급까지 대기
         with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
             json_data = json.load(f)   #json_data에 json으로 저장
-        except Exception as e:
-            return JsonResponse({'msg':'failed_Exception','error 내용':str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'msg':'failed_Exception','error 내용':str(e)}, status=400)
 
 @csrf_exempt
 def run_python(request):
