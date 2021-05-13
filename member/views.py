@@ -74,7 +74,7 @@ def member_list(request):
 @async_to_sync
 async def run_python(request):
     if request.method == 'POST':
-        email = request.GET.get('email', None)  #email 추출
+        email = request.GET.get('key', None)  #email 추출
         simple_pw = request.GET.get('SimplePassword', None) #간편 pwd 추출
         command = ["sh","../indy/start_docker/api.sh","1b57c8002249", email, simple_pw] #did발급 명령어
         try:
