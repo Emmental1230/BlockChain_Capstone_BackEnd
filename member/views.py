@@ -72,16 +72,12 @@ def member_list(request):
 @sync_to_async
 @async_to_sync
 async def did_shell(api_key, request):
-    wallet_name = api_key #wallet_name 생성
-    wallet_key = request.GET.get('SimplePassword', None) #간편 pwd 추출
-    command = ["sh","../indy/start_docker/api.sh","1b57c8002249", wallet_name, wallet_key] #did발급 명령어
-    try:
-        process = Popen(command, stdout=PIPE, stderr=PIPE)  #명령어 인자로 하여 Popen 실행  
-        process.wait()  #did 발급까지 대기
-        with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
-            json_data = json.load(f)   #json_data에 json으로 저장
-    except Exception as e:
-        return JsonResponse({'msg':'failed_Exception','error 내용':str(e)}, status=400)
+    process = Popen(command, stdout=PIPE, stderr=PIPE)  #명령어 인자로 하여 Popen 실행  
+    process.wait()  #did 발급까지 대기
+    with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
+        json_data = json.load(f)   #json_data에 json으로 저장
+    return json_data
+    
 
 @csrf_exempt
 def run_python(request):
@@ -93,7 +89,13 @@ def run_python(request):
         api_key = request.GET.get('key', None)  #key 추출
 
         if studentDB.filter(user_key = api_key).exists() :
-            did_shell(api_key,request)
+            wallet_name = api_key #wallet_name 생성
+            wallet_key = request.GET.get('SimplePassword', None) #간편 pwd 추출
+            command = ["sh","../indy/start_docker/api.sh","1b57c8002249", wallet_name, wallet_key] #did발급 명령어
+            try:
+                json_data = did_shell(api_key,request)
+            except Exception as e:
+                return JsonResponse({'msg':'failed_Exception','error 내용':str(e)}, status=400)
         else :
             return JsonResponse({'msg' : 'Key is error'}, status=400)
         
