@@ -118,7 +118,7 @@ def findmyinfo(request):
             std = Member.objects.get(email = email)     #해당 학생 정보 저장
             return JsonResponse({'user_key': std.user_key,   }, status=201)
         else :
-            return JsonResponse({'msg': '가입되지 않은 email입니다.', 'hash1':hashlib.sha256('이팔청춘의 U-PASSS'.encode()).hexdigest(), 'hash2':hashlib.sha256('이팔청춘의 U-PASSS'.encode())}, status=400)
+            return JsonResponse({'msg': '가입되지 않은 email입니다.', 'hash1': str(hashlib.sha256('이팔청춘의 U-PASSS'.encode()).hexdigest()), 'hash2':str(hashlib.sha256('이팔청춘의 U-PASSS'.encode()))}, status=400)
 
 
 
