@@ -22,7 +22,7 @@ from member import views
 import member.api
 
 
-app_name='member'
+app_name = 'member'
 
 router = routers.DefaultRouter()
 router.register('members', member.api.MemberViewSet)
@@ -36,6 +36,7 @@ urlpatterns = [
     path('api/members/', views.member_list),
     #path('api/members/<word>', views.member),
     path('api/generatedid/', views.generate_did),
+    path('api/getdid/', views.get_did),
     path('api/findmyinfo/', views.findmyinfo),
     #path('readdid/', readDID),
 ]
