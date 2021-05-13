@@ -76,7 +76,7 @@ async def did_shell(command):
     process.wait()  #did 발급까지 대기
     with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
         json_data = json.load(f)   #json_data에 json으로 저장
-    return JsonResponse(json_data)
+    return JsonResponse(json_data, safe=False)
     
 
 @csrf_exempt
