@@ -67,25 +67,18 @@ def member_list(request):
             return JsonResponse(user_key_json, status=201)
 
         return JsonResponse(serializer.errors, status=400)
-
-@csrf_exempt
-@sync_to_async
-@async_to_sync
-def did_shell(command):
-      #json_data에 json으로 저장
-    print(json_data)
-    return json_data
     
-
-def checkDB(api_key):
+#checkDB 쓸수있는곳 자주쓰기
+def checkDB(compare1, compare2):
     studentDB = Member.objects.all()
-    if studentDB.filter(user_key = api_key).exists():
+    if studentDB.filter(compare1 = compare2).exists():
         return True
     else:
         return False
 
 
 @csrf_exempt
+#did 발급
 def generate_did(request):
     if request.method == 'POST':
         if not 'key' in request.GET :
@@ -93,7 +86,7 @@ def generate_did(request):
 
         api_key = request.GET.get('key', None)  #key 추출
         
-        if checkDB(api_key):
+        if checkDB(user_key, api_key):
             wallet_name = api_key #wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None) #간편 pwd 추출
             command = ["sh","../indy/start_docker/api.sh","1b57c8002249", wallet_name, wallet_key] #did발급 명령어
@@ -111,8 +104,8 @@ def generate_did(request):
 
 
 @csrf_exempt
+#회원찾기
 def findmyinfo(request):
-    #email, stdnum 받을 경우, 해당 key값 반환
     if request.method == 'POST':
         check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASS'.encode()))
         stdnum = request.GET.get('stdnum', None)
@@ -125,11 +118,18 @@ def findmyinfo(request):
         studentDB = Member.objects.all()
 
         #email 정보가 DB에 있는지 확인
-        if studentDB.filter(info_hash = info_hash).exists() :
-            std = Member.objects.get(info_hash = info_hash)     #해당 학생 정보 저장
+        if checkDB(email,email):
+            std = Member.objects.get(email = email)     #해당 학생 정보 저장
             return JsonResponse({'user_key': std.user_key }, status=201)
         else :
             return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
+            
+        if checkDB(info_hash, info_hash):
+            std = Member.objects.get(info_hash = info_hash)     #해당 학생 정보 저장
+            return JsonResponse({'user_key': std.user_key }, status=201)
+        else :
+            return JsonResponse({'msg': '기'}, status=400)
+    
 
 '''
 @csrf_exempt
