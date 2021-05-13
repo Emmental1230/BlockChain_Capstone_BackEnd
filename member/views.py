@@ -74,16 +74,26 @@ def member_list(request):
 @async_to_sync
 async def run_python(request):
     if request.method == 'POST':
-        email = request.GET.get('key', None)  #email 추출
-        simple_pw = request.GET.get('SimplePassword', None) #간편 pwd 추출
-        command = ["sh","../indy/start_docker/api.sh","1b57c8002249", email, simple_pw] #did발급 명령어
-        try:
-            process = Popen(command, stdout=PIPE, stderr=PIPE)  #명령어 인자로 하여 Popen 실행  
-            process.wait()  #did 발급까지 대기
-            with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
-                 json_data = json.load(f)   #json_data에 json으로 저장
-        except Exception as e:
-            return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
+        if not 'key' in request.GET :
+            return JsonResponse({'msg' : 'parmas error'}, status=400)
+
+        studentDB = Member.objects.all()
+        api_key = request.GET.get('key', None)  #key 추출
+
+        if studentDB.filter(user_key = api_key).exists() :
+            wallet_name = api_key #wallet_name 생성
+            wallet_key = request.GET.get('SimplePassword', None) #간편 pwd 추출
+            command = ["sh","../indy/start_docker/api.sh","1b57c8002249", wallet_name, wallet_key] #did발급 명령어
+            try:
+                process = Popen(command, stdout=PIPE, stderr=PIPE)  #명령어 인자로 하여 Popen 실행  
+                process.wait()  #did 발급까지 대기
+                with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
+                    json_data = json.load(f)   #json_data에 json으로 저장
+            except Exception as e:
+                return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
+        else :
+            return JsonResponse({'msg' : 'Key is error'}, status=400)
+        
         return JsonResponse(json_data, status=201)
 
 
