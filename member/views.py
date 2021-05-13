@@ -76,7 +76,7 @@ async def did_shell(command):
     process.wait()  #did 발급까지 대기
     with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
         json_data = json.load(f)   #json_data에 json으로 저장
-    return json_data
+    return JsonResponse(json_data)
     
 
 @csrf_exempt
@@ -93,13 +93,13 @@ def run_python(request):
             wallet_key = request.GET.get('SimplePassword', None) #간편 pwd 추출
             command = ["sh","../indy/start_docker/api.sh","1b57c8002249", wallet_name, wallet_key] #did발급 명령어
             try:
-                json_data = did_shell(command)
+                result = did_shell(command)
             except Exception as e:
                 return JsonResponse({'msg':'failed_Exception','error 내용':str(e)}, status=400)
         else :
             return JsonResponse({'msg' : 'Key is error'}, status=400)
         
-        return JsonResponse(json_data, status=201)
+        return JsonResponse(result, status=201)
 
 
 @csrf_exempt
