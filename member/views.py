@@ -93,19 +93,19 @@ async def run_python(request):
 ########################################################
 
 #######################################################
-            # with open('/home/caps/BlockChain_Capstone_BackEnd/data.json')as f:
-            #     json_data = json.load(f)
-            #     email = json_data['email']
-            #     did = json_data['did']
+            with open('/home/caps/BlockChain_Capstone_BackEnd/data.json')as f:
+                json_data = json.load(f)
+                email = json_data['email']
+                did = json_data['did']
 
-                #result = {"status": "Failed  ", "output":str(output)}
+                result = {"status": "Failed  ", "output":str(output)}
 
 
         except Exception as e:
             #result =  {"status": "failed_Exception"  , "output":str(e)}
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
 
-        return JsonResponse({'output':str(output), 'command':str(command), 'email':email, "simple_pw":simple_pw}, status=201)
+        return JsonResponse({'output':str(output), 'command':str(command), 'email':email, "simple_pw":simple_pw, 'did':did}, status=201)
 
 @csrf_exempt
 def findmyinfo(request):
