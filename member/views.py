@@ -72,7 +72,7 @@ def member_list(request):
 @csrf_exempt
 @sync_to_async
 @async_to_sync
-def get_did(request):
+async def get_did(request):
     if request.method == 'POST':
         email = request.GET.get('email', None)  #email 추출
         simple_pw = request.GET.get('SimplePassword', None) #간편 pwd 추출
