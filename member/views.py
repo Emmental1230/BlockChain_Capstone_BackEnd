@@ -83,7 +83,7 @@ async def run_python(request):
         studentDB = get_all_users()
         api_key = request.GET.get('key', None)  #key 추출
 
-        if studentDB.filter(user_key = api_key).exists() :
+        if await studentDB.filter(user_key = api_key).exists() :
             wallet_name = api_key #wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None) #간편 pwd 추출
             command = ["sh","../indy/start_docker/api.sh","1b57c8002249", wallet_name, wallet_key] #did발급 명령어
