@@ -96,7 +96,7 @@ async def run_python(request):
                 process = Popen(command, stdout=PIPE, stderr=PIPE)  #명령어 인자로 하여 Popen 실행  
                 process.wait()  #did 발급까지 대기
                 with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
-                json_data = json.load(f) 
+                    json_data = json.load(f) 
             except Exception as e:
                 return JsonResponse({'msg':'failed_Exception','error 내용':str(e)}, status=400)
         else :
