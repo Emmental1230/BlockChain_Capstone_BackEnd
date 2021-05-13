@@ -82,8 +82,8 @@ async def run_python(request):
         #command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
         #command = ["sh", "/home/caps/docker/Blockchain_Capstone_Indy/start_docker/api.sh", "f57bccba3b28","asdfsadf@kyonggi.ac.kr"]
         try:
-            #process = Popen(command, stdout=PIPE, stderr=STDOUT)
-            process = Popen(command, stdout=PIPE)
+            process = Popen(command, stdout=PIPE, stderr=STDOUT)
+            # process = Popen(command, stdout=PIPE)
 
             process.wait()
             output = process.stdout.read()
