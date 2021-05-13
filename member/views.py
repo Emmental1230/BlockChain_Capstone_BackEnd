@@ -16,56 +16,68 @@ from asgiref.sync import sync_to_async
 
 @csrf_exempt
 def member_list(request):
+    #모든 학생들 조회
+    if request.method == 'GET':
 
-    #해당 학생 data 반환
-    if request.method == 'GET': 
-        if not 'key' in request.GET :   #key가 없을 경우 error 출력
-            return JsonResponse({'msg' : 'params error'}, status=400)
+        if not 'key' in request.GET :
+            return JsonResponse({'msg' : 'parmas error'}, status=400)
 
         hash_key = request.GET.get('key', None)
+        print(hash_key)
 
         try :
-            obj = Member.objects.get(email_hash=hash_key)
+            obj = Member.objects.get(user_key=hash_key)
+
             serializer = MemberSerializer(obj)
             return JsonResponse(serializer.data, status=201, safe=False)
         except :
-            return JsonResponse({'msg' : 'Key is not exist'}, status=400)
+            return JsonResponse({'msg' : 'Key is error'}, status=400)
 
     #회원가입 요청
     elif request.method == 'POST':
-        if not 'key' in request.GET :   #key가 없을 경우 error 출력
-            return JsonResponse({'msg' : 'params error'}, status=400)
+        if not 'key' in request.GET :
+            return JsonResponse({'msg' : 'parmas error'}, status=400)
 
         api_key = request.GET.get('key', None)
-        if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :  #이 주석 보면 저 해싱값이 뭘 뜻하는건지 써줘 기우
-            return JsonResponse({'msg' : 'Key error'}, status=400)
+        if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :
+            return JsonResponse({'msg' : 'Key is error'}, status=400)
 
-        data = JSONParser().parse(request)
+        stdnum = request.GET.get('stdnum', None)
+        major = request.GET.get('major', None)
+        name = request.GET.get('name', None)
+        email = request.GET.get('email', None)
+
         studentDB = Member.objects.all()
-
-        email = data['email']
-        stdnum = data['stdnum']
 
         #중복 회원여부 확인
         if studentDB.filter(email = email).exists() :
             return JsonResponse({'msg':'Email is already exists'}, status=400)
-        elif studentDB.filter(stdnum = stdnum).exists() :
-            return JsonResponse({'msg':'stdnum is already exists'}, status=400)
 
-        #email 해시 하는 부분
-        salt = bytes( base62.encodebytes(os.urandom(16)), encoding="utf-8")
-        email_dump = json.dumps(email, sort_keys = True).encode() + salt
-        email_hash = hashlib.sha256(email_dump).hexdigest()
-        data['email_hash'] = email_hash
-        
+        #user_key 해시 하는 부분
+
+        salt = base62.encodebytes(os.urandom(16))
+        salt = bytes(salt, encoding="utf-8")
+
+        email_dump = str(stdnum) + str(major) + str(name) + str(email) + str(salt)
+        user_key = hashlib.sha256(email_dump.encode('utf-8')).hexdigest()
+        user_key_json = { 'user_key' : '' }
+        user_key_json['user_key'] = user_key
+
+        data = { 'email' : '', 'user_key' : '' }
+        data['email'] = email
+        data['user_key'] = user_key
+
+
         serializer = MemberSerializer(data=data)
 
-        #if pk == 'temporaryKey':         #app사용자인지 확인
         if serializer.is_valid():       #입력 data들 포맷 일치 여부 확인
             serializer.save()
-            return JsonResponse({'email_hash': email_hash}, status=201)
-        else:
-            return JsonResponse({'msg' :'data format이 일치하지 않습니다.'}, status=400)
+            return JsonResponse(user_key_json, status=201)
+
+        return JsonResponse(serializer.errors, status=400)
+
+
+
 
 
 @csrf_exempt
@@ -85,6 +97,8 @@ async def run_python(request):
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
         return JsonResponse(json_data, status=201)
 
+
+
 @csrf_exempt
 def findmyinfo(request):
     #email, stdnum 받을 경우, 해당 key값 반환
@@ -96,21 +110,20 @@ def findmyinfo(request):
         if api_key != '6a7f2b72ec2befee1cdb125a9ce96e8bfcac2484ad7a068024fc1b946d38bffe' :  #이 주석 보면 저 해싱값이 뭘 뜻하는건지 써줘 기우
             return JsonResponse({'msg' : 'Key error'}, status=400)
 
-        data = JSONParser().parse(request)
+        email = request.GET.get('email', None)
+
         studentDB = Member.objects.all()
 
         #email 정보가 DB에 있는지 확인
-        if studentDB.filter(email = data['email']).exists() :
-            std = Member.objects.get(email = data['email'])     #해당 학생 정보 저장
-
-            #stdnum부분이 공란일 경우 or
-            #stdnum가 있고 email, stdnum이 한사람의 정보일 경우
-            if not data['stdnum']  or std.stdnum == data['stdnum'] :
-                return JsonResponse({'email_hash': std.email_hash }, status=201)
-            else :
-                return JsonResponse({'msg':'email과 stdnum이 일치하지 않습니다.'}, status=400)
+        if studentDB.filter(email = email).exists() :
+            std = Member.objects.get(email = email)     #해당 학생 정보 저장
+            return JsonResponse({'user_key': std.user_key }, status=201)
         else :
             return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
+
+
+
+
 
 
 '''
