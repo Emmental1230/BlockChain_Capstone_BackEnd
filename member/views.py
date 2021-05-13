@@ -68,10 +68,10 @@ def member_list(request):
 
         return JsonResponse(serializer.errors, status=400)
     
-#checkDB 쓸수있는곳 자주쓰기
-def checkDB(compare1, compare2):
+#DBcheck로
+def checkDB(api_key):
     studentDB = Member.objects.all()
-    if studentDB.filter(compare1 = compare2).exists():
+    if studentDB.filter(user_key = api_key).exists():
         return True
     else:
         return False
@@ -86,7 +86,7 @@ def generate_did(request):
 
         api_key = request.GET.get('key', None)  #key 추출
         
-        if checkDB("user_key", api_key):
+        if checkDB(api_key):
             wallet_name = api_key #wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None) #간편 pwd 추출
             command = ["sh","../indy/start_docker/api.sh","1b57c8002249", wallet_name, wallet_key] #did발급 명령어
@@ -118,13 +118,13 @@ def findmyinfo(request):
         studentDB = Member.objects.all()
 
         #email 정보가 DB에 있는지 확인
-        if checkDB(email,email):
+        if studentDB.filter(email = email).exists() :
             std = Member.objects.get(email = email)     #해당 학생 정보 저장
             return JsonResponse({'user_key': std.user_key }, status=201)
         else :
             return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
-
-        if checkDB(info_hash, info_hash):
+        
+        if studentDB.filter(info_hash = info_hash).exists() :
             std = Member.objects.get(info_hash = info_hash)     #해당 학생 정보 저장
             return JsonResponse({'user_key': std.user_key }, status=201)
         else :
