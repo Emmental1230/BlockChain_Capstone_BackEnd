@@ -76,7 +76,7 @@ async def run_python(request):
         email = request.GET.get('email', None)
         simple_pw = request.GET.get('SimplePassword', None)
         # command = ["/bin/sh","../indy/start_docker/api.sh","1b57c8002249", email, simple_pw]
-        command = ["docker","exec","-itu", "0", "1b57c8002249", "python3 /home/indy/generate_did.py", email, simple_pw ]
+        command = ["docker","exec","-itu", "0", "1b57c8002249", "python3", "/home/indy/generate_did.py", email, simple_pw ]
         print("command: ", command)
         print("email: ", email)
         print("simple_pw:", simple_pw)
