@@ -76,10 +76,13 @@ async def did_shell(command):
     process.wait()  #did 발급까지 대기
     with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
         json_data = json.load(f)   #json_data에 json으로 저장
+    print(json_data)
     return JsonResponse(json_data, safe=False)
     
 
 @csrf_exempt
+@sync_to_async
+@async_to_sync
 def run_python(request):
     if request.method == 'POST':
         if not 'key' in request.GET :
