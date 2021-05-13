@@ -73,42 +73,17 @@ def member_list(request):
 @async_to_sync
 async def run_python(request):
     if request.method == 'POST':
-        email = request.GET.get('email', None)
-        simple_pw = request.GET.get('SimplePassword', None)
-        command = ["sh","../indy/start_docker/api.sh","1b57c8002249", email, simple_pw]
-        # command = ["docker","exec","-itu", "0", "1b57c8002249", "python3 /home/indy/generate_did.py",  ]
-        # command = 'docker exec -itu 0 1b57c8002249 python3 /home/indy/generate_did.py 111 111'.split()
-        print("command: ", command)
-        print("email: ", email)
-        print("simple_pw:", simple_pw)
-        #command = ["sh","/home/caps/indy/start_docker/api.sh","f92f65a3731e","test@kyonggi.ac.kr"]
-        #command = ["sh", "/home/caps/docker/Blockchain_Capstone_Indy/start_docker/api.sh", "f57bccba3b28","asdfsadf@kyonggi.ac.kr"]
+        email = request.GET.get('email', None)  #email 추출
+        simple_pw = request.GET.get('SimplePassword', None) #간편 pwd 추출
+        command = ["sh","../indy/start_docker/api.sh","1b57c8002249", email, simple_pw] #did발급 명령어
         try:
-            process = Popen(command, stdout=PIPE, stderr=PIPE)
-            # process = Popen(command, stdout=PIPE)
-
-            process.wait()
-            output = process.stdout.read()
-            # output, err = process.communicate()
-            print("output:", output)
-#            exitstatus = process.poll()
-#            pwd = os.path.realpath(__file__)
-########################################################
-
-#######################################################
-            # with open('/home/caps/BlockChain_Capstone_BackEnd/data.json')as f:
-            #     json_data = json.load(f)
-            #     email = json_data['email']
-            #     did = json_data['did']
-
-            #     result = {"status": "Failed  ", "output":str(output)}
-
-
+            process = Popen(command, stdout=PIPE, stderr=PIPE)  #명령어 인자로 하여 Popen 실행  
+            process.wait()  #did 발급까지 대기
+            with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
+                 json_data = json.load(f)   #json_data에 json으로 저장
         except Exception as e:
-            #result =  {"status": "failed_Exception"  , "output":str(e)}
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
-        # return JsonResponse(json_data, status=201)
-        return JsonResponse({'output':str(output), 'command':str(command), 'email':email, "simple_pw":simple_pw}, status=201)
+        return JsonResponse(json_data, status=201)
 
 @csrf_exempt
 def findmyinfo(request):
