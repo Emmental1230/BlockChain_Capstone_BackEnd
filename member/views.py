@@ -102,7 +102,7 @@ def run_python(request):
         else :
             return JsonResponse({'msg' : 'Key is error'}, status=400)
         
-        return JsonResponse(result, status=201)
+        return JsonResponse(result, status=201, safe=False)
 
 
 @csrf_exempt
