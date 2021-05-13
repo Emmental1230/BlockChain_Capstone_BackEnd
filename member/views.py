@@ -71,9 +71,9 @@ def member_list(request):
 @csrf_exempt
 @sync_to_async
 @async_to_sync
-async def did_shell(command):
+def did_shell(command):
     process = Popen(command, stdout=PIPE, stderr=PIPE)  #명령어 인자로 하여 Popen 실행  
-    process.wait()  #did 발급까지 대기
+    #process.wait()  #did 발급까지 대기
     with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
         json_data = json.load(f)   #json_data에 json으로 저장
     print(json_data)
