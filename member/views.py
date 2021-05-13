@@ -81,8 +81,6 @@ def did_shell(command):
     
 
 @csrf_exempt
-@sync_to_async
-@async_to_sync
 def run_python(request):
     if request.method == 'POST':
         if not 'key' in request.GET :
