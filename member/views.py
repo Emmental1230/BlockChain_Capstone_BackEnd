@@ -77,7 +77,7 @@ async def did_shell(command):
     with open('/home/deploy/data.json')as f:    #server로 복사된 did 열기
         json_data = json.load(f)   #json_data에 json으로 저장
     print(json_data)
-    return JsonResponse(json_data, safe=False)
+    return json_data
     
 
 @csrf_exempt
