@@ -96,12 +96,12 @@ async def run_python(request):
 ########################################################
 
 #######################################################
-            with open('/home/caps/BlockChain_Capstone_BackEnd/data.json')as f:
-                json_data = json.load(f)
-                email = json_data['email']
-                did = json_data['did']
+            # with open('/home/caps/BlockChain_Capstone_BackEnd/data.json')as f:
+            #     json_data = json.load(f)
+            #     email = json_data['email']
+            #     did = json_data['did']
 
-                result = {"status": "Failed  ", "output":str(output)}
+            #     result = {"status": "Failed  ", "output":str(output)}
 
 
         except Exception as e:
