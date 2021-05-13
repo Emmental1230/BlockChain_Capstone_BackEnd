@@ -110,7 +110,7 @@ def findmyinfo(request):
         check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASS'.encode()))
         email = request.GET.get('email', None)
 
-        studentDB = Member.objects.all()
+        studentDB = sync_to_async(Member.objects.all())
 
         #email 정보가 DB에 있는지 확인
         if studentDB.filter(email = email).exists() :
