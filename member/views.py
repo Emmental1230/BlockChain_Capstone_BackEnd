@@ -86,7 +86,8 @@ async def run_python(request):
             # process = Popen(command, stdout=PIPE)
 
             process.wait()
-            output = process.stdout.read()
+            #output = process.stdout.read()
+            output, err = process.communicate()
             print("output:", output)
 #            exitstatus = process.poll()
 #            pwd = os.path.realpath(__file__)
@@ -105,7 +106,7 @@ async def run_python(request):
             #result =  {"status": "failed_Exception"  , "output":str(e)}
             return JsonResponse({'msg':'failed_Exception','erreor 내용':str(e)}, status=400)
 
-        return JsonResponse({'output':str(output), 'command':str(command), 'email':email, "simple_pw":simple_pw, 'did':did}, status=201)
+        return JsonResponse({'output':str(output), 'err':err,'command':str(command), 'email':email, "simple_pw":simple_pw, 'did':did}, status=201)
 
 @csrf_exempt
 def findmyinfo(request):
