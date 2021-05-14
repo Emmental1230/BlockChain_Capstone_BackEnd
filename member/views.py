@@ -74,16 +74,13 @@ def member_list(request):
 
         return JsonResponse(serializer.errors, status=400)
 
-# DBcheck로
-
-
+# DB check
 def checkDB(api_key):
     studentDB = Member.objects.all()
     if studentDB.filter(user_key=api_key).exists():
         return True
     else:
         return False
-
 
 @csrf_exempt
 # did 발급
@@ -126,7 +123,7 @@ def get_did(request):
             wallet_id = api_key  # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             command = ["sh", "../indy/start_docker/sh_get_did.sh",
-                       "1b57c8002249", wallet_id, wallet_key]  # did발급 명령어
+                       "1b57c8002249", wallet_id, wallet_key]  # did찾기 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -157,16 +154,14 @@ def findmyinfo(request):
 
         # email 정보가 DB에 있는지 확인
         if studentDB.filter(email=email).exists():
-            std = Member.objects.get(email=email)  # 해당 학생 정보 저장
-            return JsonResponse({'user_key': std.user_key}, status=201)
+            # 제대로된 정보 입력했는지 확인
+            if studentDB.filter(info_hash=info_hash).exists():
+                std = Member.objects.get(info_hash=info_hash)  # 해당 학생 정보 저장
+                return JsonResponse({'user_key': std.user_key}, status=201)
+            else:
+                return JsonResponse({'msg': '잘못된 정보를 입력하였습니다.'}, status=400)
         else:
             return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
-
-        if studentDB.filter(info_hash=info_hash).exists():
-            std = Member.objects.get(info_hash=info_hash)  # 해당 학생 정보 저장
-            return JsonResponse({'user_key': std.user_key}, status=201)
-        else:
-            return JsonResponse({'msg': '기'}, status=400)
 
 
 '''
