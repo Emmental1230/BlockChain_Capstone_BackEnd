@@ -95,7 +95,7 @@ def generate_did(request):
             wallet_id = api_key  # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             command = ["sh", "../indy/start_docker/sh_generate_did.sh",
-                       "1b57c8002249", wallet_id, wallet_key]  # did발급 명령어
+                       "095b8a7a52ec", wallet_id, wallet_key]  # did발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -106,7 +106,6 @@ def generate_did(request):
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
-
         return JsonResponse(json_data, status=201, safe=False)
 
 
@@ -123,18 +122,21 @@ def get_did(request):
             wallet_id = api_key  # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             command = ["sh", "../indy/start_docker/sh_get_did.sh",
-                       "1b57c8002249", wallet_id, wallet_key]  # did찾기 명령어
+                       "095b8a7a52ec", wallet_id, wallet_key]  # did찾기 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
+                output = process.stdout.read()
                 process.wait()  # did 발급까지 대기
-                with open('/home/deploy/data.json')as f:  # server로 복사된 did 열기
+                with open('/home/deploy/student_did.json')as f:  # server로 복사된 did 열기(학생이름으로 필요)
                     json_data = json.load(f)  # json_data에 json으로 저장
+                    if json_data['error'] == 'Error':
+                        return JsonResponse({'msg': 'DID를 찾을 수 없습니다.'}, status=400)
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
-
+        # return JsonResponse({'output':str(output)}, status=201)
         return JsonResponse(json_data, status=201, safe=False)
 
 
