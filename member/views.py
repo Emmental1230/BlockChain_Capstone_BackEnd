@@ -122,7 +122,7 @@ def get_did(request):
             wallet_id = api_key  # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             command = ["sh", "../indy/start_docker/sh_get_did.sh",
-                       "095b8a7a52ec", wallet_id, wallet_key]  # did찾기 명령어
+                       "095b8a7a52ec", wallet_id, wallet_key]  # did찾기 명령어 origin : 1b57c8002249    YG : f57bccba3b28  Kiwoo : 
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -144,7 +144,7 @@ def get_did(request):
 # 회원찾기
 def findmyinfo(request):
     if request.method == 'POST':
-        check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASS'.encode()))
+        check_tempkey(r-equest, hashlib.sha256('이팔청춘의 U-PASS'.encode()))
         stdnum = request.GET.get('stdnum', None)
         major = request.GET.get('major', None)
         name = request.GET.get('name', None)
@@ -174,15 +174,4 @@ def member(request, word):
     if request.method == 'GET':
         serializer = MemberSerializer(obj)
         return JsonResponse(serializer.data, status=201, safe=False)  
-'''
-
-# 현재 안씀
-'''
-@csrf_exempt
-def readDID(request): 
-    with open('../docker/Blockchain_Capstone_Indy/start_docker/data.json')as f:
-        json_data = json.load(f)
-        email = json_data['email']
-        did = json_data['did']
-    return JsonResponse(json_data, status=201)
 '''
