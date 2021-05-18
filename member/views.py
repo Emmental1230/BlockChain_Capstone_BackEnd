@@ -94,18 +94,19 @@ def generate_did(request):
         if checkDB(api_key):
             wallet_name = api_key  # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-            command = ["sh","../indy/start_docker/sh_generate_did.sh","1c2a2ef96663", wallet_name, wallet_key] #did 발급 명령어
+            command = ["sh","../indy/start_docker/sh_generate_did.sh","475ae815a948", wallet_name, wallet_key] #did 발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
                 process.wait()  # did 발급까지 대기
+                output = process.stdout.read()
 
-                with open('/home/deploy/data.json')as f:  # server로 복사된 did 열기
+                with open('../../deploy/data.json')as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
                     # os.remove("/home/deploy/data.json") #생성된 파일 삭제
                     if json_data['error'] == 'Error':
                         return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
-                    os.remove("/home/deploy/data.json") #생성된 파일 삭제
+                    os.remove("../../deploy/data.json") #생성된 파일 삭제
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
@@ -125,7 +126,7 @@ def get_did(request):
             wallet_name = api_key  # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             command = ["sh", "../indy/start_docker/sh_get_did.sh",
-                       "1c2a2ef96663", wallet_name, wallet_key]  # did찾기 명령어 origin : 1b57c8002249    YG : f57bccba3b28  Kiwoo : 
+                       "475ae815a948", wallet_name, wallet_key]  # did찾기 명령어 origin : 1b57c8002249    YG : f57bccba3b28  Kiwoo : 
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -134,7 +135,7 @@ def get_did(request):
                     json_data = json.load(f)  # json_data에 json으로 저장
                     if json_data['error'] == 'Error':
                         return JsonResponse({'msg': 'DID를 찾을 수 없습니다.'}, status=400)
-                    os.remove("/home/deploy/student_did.json") #생성된 파일 삭제
+                    # os.remove("/home/deploy/student_did.json") #생성된 파일 삭제
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
@@ -184,14 +185,17 @@ def get_entry(request):
             day = request.GET.get('day', None) # 일
 
             command = ["sh", "../indy/start_docker/sh_get_attrib.sh",
-                       "1c2a2ef96663", wallet_name, wallet_key, did, year, month, day] #출입 여부 찾기 명령어
+                       "475ae815a948", wallet_name, wallet_key, did, year, month, day] #출입 여부 찾기 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
                 process.wait()  # did 발급까지 대기
+
                 with open('/home/deploy/attrib.json')as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
-                os.remove("/home/deploy/attrib.json") #생성된 파일 삭제
+                    os.remove("/home/deploy/attrib.json") #생성된 파일 삭제
+                    if json_data['error'] == 'Error':
+                        return JsonResponse({'msg': '출입한 내역이 없습니다.'}, status=400)
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
@@ -218,11 +222,10 @@ def generate_entry(request):
             day = request.GET.get('day', None) # 일
         
             command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
-                       "1c2a2ef96663", wallet_name, wallet_key, did, building, year, month, day] #출입 여부 등록 명령어
+                       "475ae815a948", wallet_name, wallet_key, did, building, year, month, day] #출입 여부 등록 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
-                output = process.stdout.read()
                 process.wait()  # did 발급까지 대기
 
             except Exception as e:
