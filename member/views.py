@@ -94,7 +94,7 @@ def generate_did(request):
         if checkDB(api_key):
             wallet_name = api_key  # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-            command = ["sh","../indy/start_docker/sh_generate_did.sh","1c2a2ef96663", wallet_name, wallet_key] #did발급 명령어
+            command = ["sh","../indy/start_docker/sh_generate_did.sh","1c2a2ef96663", wallet_name, wallet_key] #did 발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -129,7 +129,6 @@ def get_did(request):
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
-                output = process.stdout.read()
                 process.wait()  # did 발급까지 대기
                 with open('/home/deploy/student_did.json')as f:  # server로 복사된 did 열기(학생이름으로 필요)
                     json_data = json.load(f)  # json_data에 json으로 저장
@@ -140,7 +139,7 @@ def get_did(request):
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
-        return JsonResponse(json_data, status=201, safe=False)
+        return JsonResponse(json_data, status=201)
 
 
 @csrf_exempt
@@ -179,17 +178,16 @@ def get_entry(request):
         if checkDB(api_key):
             wallet_name = api_key # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-            did = request.GET.get('did', None)
-            year = request.GET.get('year', None)
-            month = request.GET.get('month', None)
-            day = request.GET.get('day', None)
+            did = request.GET.get('did', None) # user did
+            year = request.GET.get('year', None) # 연도
+            month = request.GET.get('month', None) # 월
+            day = request.GET.get('day', None) # 일
 
             command = ["sh", "../indy/start_docker/sh_get_attrib.sh",
-                       "1c2a2ef96663", wallet_name, wallet_key, did, year, month, day]
+                       "1c2a2ef96663", wallet_name, wallet_key, did, year, month, day] #출입 여부 찾기 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
-                output = process.stdout.read()
                 process.wait()  # did 발급까지 대기
                 with open('/home/deploy/attrib.json')as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
@@ -199,11 +197,11 @@ def get_entry(request):
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
-        return JsonResponse(json_data, status=201, safe=False)
+        return JsonResponse(json_data, status=201)
 
 
 @csrf_exempt
-# 출입 등록
+# 출입 여부 등록
 def generate_entry(request):
     if request.method == 'POST':
         if not 'key' in request.GET:
@@ -213,14 +211,14 @@ def generate_entry(request):
         if checkDB(api_key):
             wallet_name = api_key # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-            did = request.GET.get('did', None)
-            year = request.GET.get('year', None)
-            building = request.GET.get('building', None)
-            month = request.GET.get('month', None)
-            day = request.GET.get('day', None)
+            did = request.GET.get('did', None) # user did
+            year = request.GET.get('year', None) # 연도
+            building = request.GET.get('building', None) # 출입 건물
+            month = request.GET.get('month', None) # 월
+            day = request.GET.get('day', None) # 일
         
             command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
-                       "1c2a2ef96663", wallet_name, wallet_key, did, building, year, month, day]
+                       "1c2a2ef96663", wallet_name, wallet_key, did, building, year, month, day] #출입 여부 등록 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -232,7 +230,7 @@ def generate_entry(request):
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
-        return JsonResponse({'output': str(output)}, status=201, safe=False)
+        return JsonResponse({'output': str(output)}, status=201)
 
 '''
 @csrf_exempt
