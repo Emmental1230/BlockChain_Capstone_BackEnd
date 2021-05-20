@@ -13,13 +13,13 @@ import os
 import random
 import base62
 import asyncio
+import time
 from asgiref.sync import async_to_sync
 from asgiref.sync import sync_to_async
 
-#import bcrypt
 # Create your views here.
-
-
+containerId = "7be7f6cad5de" #containerId 선언
+tempkey = "이팔청춘의 U-PASS"    #tmpkey 선언
 @csrf_exempt
 # 임시키 확인
 def check_tempkey(request, compare_key):
@@ -36,7 +36,7 @@ def check_tempkey(request, compare_key):
 def member_list(request):
     # 회원가입 요청
     if request.method == 'POST':
-        check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASS'.encode()))
+        check_tempkey(request, hashlib.sha256(tempkey.encode()))
         stdnum = request.GET.get('stdnum', None)
         major = request.GET.get('major', None)
         name = request.GET.get('name', None)
@@ -90,11 +90,56 @@ def generate_did(request):
             return JsonResponse({'msg': 'parmas error'}, status=400)
 
         api_key = request.GET.get('key', None)  # key 추출
-
+        student = Member.objects.get(user_key = api_key)
+        email = student.email
         if checkDB(api_key):
-            wallet_name = api_key  # wallet_name 생성
+            timestamp = time.time() #타임스탬프
+            #info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
+            wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest() # wallet_name (이메일 + timestamp) 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-            command = ["sh","../indy/start_docker/sh_generate_did.sh","1c2a2ef96663", wallet_name, wallet_key] #did발급 명령어
+            command = ["sh","../indy/start_docker/sh_generate_did.sh", containerId, wallet_name, wallet_key] #did발급 명령어
+            try:
+                # 명령어 인자로 하여 Popen 실행
+                process = Popen(command, stdout=PIPE, stderr=PIPE)
+                process.wait()  # did 재발급까지 대기
+
+                with open('/home/deploy/data.json')as f:  # server로 복사된 did 열기
+                    json_data = json.load(f)  # json_data에 json으로 저장
+                    # os.remove("/home/deploy/data.json") #생성된 파일 삭제
+                    if json_data['error'] == 'Error':
+                        return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
+                    
+                    student.did = json_data['did']  #Did 저장
+                    student.wallet_id = wallet_name # 새로운 wallet_name 저장
+                    student.save()
+
+                    os.remove("/home/deploy/data.json") #생성된 파일 삭제
+                    
+            except Exception as e:
+                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+        else:
+            return JsonResponse({'msg': 'Key is error'}, status=400)
+        return JsonResponse(json_data, status=201)
+
+@csrf_exempt
+#did 재발급
+def regenerate_did(request):
+    if request.method == 'POST':
+        if not 'key' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+
+        api_key = request.GET.get('key', None)  # key 추출
+        if checkDB(api_key):
+            #DB에서 key 가지고 email, did 가져오기
+            student = Member.objects.get(user_key=api_key)
+            did = student.did # did
+            email = student.email # 이메일
+            timestamp = time.time() #타임스탬프
+            wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest()  # wallet_name (이메일 + timestamp) 생성
+            student_id = request.GET.get('studentId', None)  # 학번 params 가져오기
+            
+            #DB에 wallet_name 저장 필요
+            command = ["sh","../indy/start_docker/sh_regenerate_did.sh", containerId, email, student_id, did] #did 재발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -104,14 +149,18 @@ def generate_did(request):
                     json_data = json.load(f)  # json_data에 json으로 저장
                     # os.remove("/home/deploy/data.json") #생성된 파일 삭제
                     if json_data['error'] == 'Error':
-                        return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
-                    os.remove("/home/deploy/data.json") #생성된 파일 삭제
+                        return JsonResponse({'msg': 'DID 재발급 오류'}, status=400)
+                    
+                    student.wallet_id = wallet_name # 새로운 wallet_name 저장
+                    student.save()
+                    os.remove("/home/deploy/data.json") # 생성된 파일 삭제
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
+            
+            
         return JsonResponse(json_data, status=201)
-
 
 @csrf_exempt
 # did 찾기
@@ -125,7 +174,7 @@ def get_did(request):
             wallet_name = api_key  # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             command = ["sh", "../indy/start_docker/sh_get_did.sh",
-                       "1c2a2ef96663", wallet_name, wallet_key]  # did찾기 명령어 origin : 1b57c8002249    YG : f57bccba3b28  Kiwoo : 
+                        containerId, wallet_name, wallet_key]  # did찾기 명령어 origin : 1b57c8002249    YG : f57bccba3b28  Kiwoo : 
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -147,7 +196,7 @@ def get_did(request):
 # 회원찾기
 def findmyinfo(request):
     if request.method == 'POST':
-        check_tempkey(request, hashlib.sha256('이팔청춘의 U-PASS'.encode()))
+        check_tempkey(request, hashlib.sha256(tempkey.encode()))
         stdnum = request.GET.get('stdnum', None)
         major = request.GET.get('major', None)
         name = request.GET.get('name', None)
@@ -185,7 +234,7 @@ def get_entry(request):
             day = request.GET.get('day', None)
 
             command = ["sh", "../indy/start_docker/sh_get_attrib.sh",
-                       "1c2a2ef96663", wallet_name, wallet_key, did, year, month, day]
+                       containerId, wallet_name, wallet_key, did, year, month, day]
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -199,7 +248,7 @@ def get_entry(request):
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
-        return JsonResponse(json_data, status=201, safe=False)
+        return JsonResponse(json_data, status=201)
 
 
 @csrf_exempt
@@ -220,19 +269,24 @@ def generate_entry(request):
             day = request.GET.get('day', None)
         
             command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
-                       "1c2a2ef96663", wallet_name, wallet_key, did, building, year, month, day]
+                       containerId, wallet_name, wallet_key, did, building, year, month, day]
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
                 output = process.stdout.read()
                 process.wait()  # did 발급까지 대기
+                return JsonResponse({'output': str(output)}, status=201)
 
+                with open('/home/deploy/gen_attrib.json')as f:  # server로 복사된 did 열기
+                    json_data = json.load(f)  # json_data에 json으로 저장
+                # os.remove("/home/deploy/gen_attrib.json") #생성된 파일 삭제
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
-        return JsonResponse({'output': str(output)}, status=201, safe=False)
+        # return JsonResponse(json_data, status=201)
+
 
 '''
 @csrf_exempt

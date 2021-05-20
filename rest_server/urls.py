@@ -36,9 +36,10 @@ urlpatterns = [
     path('api/members/', views.member_list),
     #path('api/members/<word>', views.member),
     path('api/generatedid/', views.generate_did),
+    path('api/regeneratedid/', views.regenerate_did),
     path('api/getdid/', views.get_did),
     path('api/findmyinfo/', views.findmyinfo),
     path('api/getentry/', views.get_entry),
-    path('api/generateentry/', views.generate_entry),
+    #path('api/generateentry/', views.generate_entry),
     #path('readdid/', readDID),
 ]
