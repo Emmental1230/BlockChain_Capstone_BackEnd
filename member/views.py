@@ -130,28 +130,18 @@ def generate_did(request):
             #info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
             wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest() # wallet_name (이메일 + timestamp) 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-<<<<<<< HEAD
             student_id = request.GET.get('studentId', None)  # 학번 params 가져오기
             command = ["sh","../indy/start_docker/sh_generate_did.sh", containerId, wallet_name, wallet_key, student_id] #did발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
                 process.wait()  # did 재발급까지 대기
-=======
-            command = ["sh","../indy/start_docker/sh_generate_did.sh","475ae815a948", wallet_name, wallet_key] #did 발급 명령어
-            try:
-                # 명령어 인자로 하여 Popen 실행
-                process = Popen(command, stdout=PIPE, stderr=PIPE)
-                process.wait()  # did 발급까지 대기
-                output = process.stdout.read()
->>>>>>> 89567e1d6c7fc7c94df80b45630bbc13e77c7703
 
                 with open('../../deploy/data.json')as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
                     error = json_data['error']
                     if error == 'Error':
                         return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
-<<<<<<< HEAD
                     
                     student.did = json_data['did']  #Did 저장
                     student.wallet_id = wallet_name # 새로운 wallet_name 저장
@@ -159,9 +149,6 @@ def generate_did(request):
 
                     os.remove("/home/deploy/data.json") #생성된 파일 삭제
                     
-=======
-                    os.remove("../../deploy/data.json") #생성된 파일 삭제
->>>>>>> 89567e1d6c7fc7c94df80b45630bbc13e77c7703
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
@@ -224,11 +211,7 @@ def get_did(request):
             wallet_name = student.wallet_id  # wallet_name 디비에서 찾아오기
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             command = ["sh", "../indy/start_docker/sh_get_did.sh",
-<<<<<<< HEAD
                         containerId, wallet_name, wallet_key]  
-=======
-                       "475ae815a948", wallet_name, wallet_key]  # did찾기 명령어 origin : 1b57c8002249    YG : f57bccba3b28  Kiwoo : 
->>>>>>> 89567e1d6c7fc7c94df80b45630bbc13e77c7703
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -288,11 +271,7 @@ def get_entry(request):
             day = request.GET.get('day', None) # 일
 
             command = ["sh", "../indy/start_docker/sh_get_attrib.sh",
-<<<<<<< HEAD
                        containerId, wallet_name, wallet_key, did, year, month, day]
-=======
-                       "475ae815a948", wallet_name, wallet_key, did, year, month, day] #출입 여부 찾기 명령어
->>>>>>> 89567e1d6c7fc7c94df80b45630bbc13e77c7703
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -331,11 +310,7 @@ def generate_entry(request):
             day = request.GET.get('day', None) # 일
         
             command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
-<<<<<<< HEAD
                        containerId, wallet_name, wallet_key, did, building, year, month, day]
-=======
-                       "475ae815a948", wallet_name, wallet_key, did, building, year, month, day] #출입 여부 등록 명령어
->>>>>>> 89567e1d6c7fc7c94df80b45630bbc13e77c7703
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -350,12 +325,8 @@ def generate_entry(request):
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
-<<<<<<< HEAD
         # return JsonResponse(json_data, status=201)
 
-=======
-        return JsonResponse({'output': str(output)}, status=201)
->>>>>>> 89567e1d6c7fc7c94df80b45630bbc13e77c7703
 
 '''
 @csrf_exempt
