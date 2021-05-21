@@ -20,7 +20,7 @@ from asgiref.sync import async_to_sync
 from asgiref.sync import sync_to_async
 
 # Create your views here.
-containerId = "3ff531ac50c1" #containerId 선언
+containerId = "de0aedfd8579" #containerId 선언
 tempkey = "이팔청춘의 U-PASS"    #tmpkey 선언
 @csrf_exempt
 # 임시키 확인
@@ -40,6 +40,29 @@ def checkDB(api_key):
         return True
     else:
         return False
+
+
+def check_did(did, timestamp, hashedData):
+    #hashedData : qr에 담겨진 H(H(did + 간편비번))
+
+    student = Member.objects.get(did = did)
+    cmp1 = str(student.did_time_hash) + str(timestamp)
+    cmp1_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
+
+    if hashedData == cmp1_hash:
+        return True
+    else:
+        return False
+
+
+def check_timestamp(qr):
+    api_timestamp = time.time()
+    api = int(api_timestamp)
+    if abs(api - int(qr)) <= 15:
+        return True
+    else:
+        return False
+
 
 @csrf_exempt
 def member_list(request):
@@ -147,6 +170,8 @@ def generate_did(request):
                     
                     student.did = json_data['did']  #Did 저장
                     student.wallet_id = wallet_name # 새로운 wallet_name 저장
+                    cmp1 =str(student.did) + str(wallet_key)
+                    student.did_time_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
                     student.save()
 
                     os.remove("/home/deploy/data.json") #생성된 파일 삭제
@@ -192,6 +217,8 @@ def regenerate_did(request):
                         return JsonResponse({'msg': 'DID 재발급 오류'}, status=400)
                     new_wallet_name=json_data['new_wallet']
                     student.wallet_id = new_wallet_name # 새로운 wallet_name 저장
+                    cmp1 = str(student.did) + str(wallet_key)
+                    student.did_time_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
                     student.save()
                     os.remove('/home/deploy/' + str(student_id) + 'NewWalletID.json') # 생성된 파일 삭제
             except Exception as e:
@@ -303,26 +330,54 @@ def generate_entry(request):
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             admin_did =request.GET.get('admin_did', None)  # 간편 pwd 추출
             std_did = request.GET.get('std_did', None) # user did
-            year = request.GET.get('year', None) # 연도
             building = request.GET.get('building', None) # 출입 건물
+            year = request.GET.get('year', None) # 연도
             month = request.GET.get('month', None) # 월
             day = request.GET.get('day', None) # 일
-        
-            command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
+            timestamp = request.GET.get('timestamp', None) # timestamp
+            hashedData = request.GET.get('hashedData', None) # hashedData
+
+            if check_timestamp(timestamp):  #timestamp 유효범위 검증
+                if check_did(std_did, timestamp, hashedData):   #qr 정보 검증
+                    command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
                        containerId, wallet_name, wallet_key, admin_did, std_did, building, year, month, day]
-            try:
-                # 명령어 인자로 하여 Popen 실행
-                process = Popen(command, stdout=PIPE, stderr=PIPE)
-                process.wait()  # did 발급까지 대기
-                output = process.stdout.read()
+                    try:
+                        # 명령어 인자로 하여 Popen 실행
+                        process = Popen(command, stdout=PIPE, stderr=PIPE)
+                        process.wait()  # did 발급까지 대기
+                        output = process.stdout.read()
 
-                return JsonResponse({'output': str(output)}, status=201)
+                        with open('/home/deploy/gen_attrib.json')as f:  # server로 복사된 did 열기
+                            json_data = json.load(f)  # json_data에 json으로 저장
+                            # os.remove("/home/deploy/gen_attrib.json") #생성된 파일 삭제
 
-                with open('/home/deploy/gen_attrib.json')as f:  # server로 복사된 did 열기
-                    json_data = json.load(f)  # json_data에 json으로 저장
-                # os.remove("/home/deploy/gen_attrib.json") #생성된 파일 삭제
-            except Exception as e:
-                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+                            if json_data['error'] == 'Error':
+                                return JsonResponse({'msg': 'error'}, status=400)
+
+                            entry_date = json_data['entry_date']
+                            building_num = json_data['building_num']
+                            entry_did = json_data['entry_did']
+
+                            data = {'entry_date': '', 'building_num': '', 'entry_did': ''}
+                            data['entry_date'] = entry_date
+                            data['building_num'] = building_num
+                            data['entry_did'] = entry_did
+
+                            serializer = EntrySerializer(data=data)
+
+                            if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
+                                serializer.save()
+
+
+
+                        return JsonResponse({'msg': 'generate entry complete'}, status=201)
+                    except Exception as e:
+                        return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+                else:
+                    tempadmindid = str(student.did_time_hash) + str(timestamp)
+                    return JsonResponse({'msg': 'check_DID error', 'studentDidhash' : hashedData ,'adminDidhash' : hashlib.sha256(tempadmindid.encode('utf-8')).hexdigest()}, status=400)
+            else:
+                return JsonResponse({'msg': 'timestamp error'}, status=400)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
