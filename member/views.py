@@ -362,6 +362,7 @@ def generate_entry(request):
                             data['entry_date'] = entry_date
                             data['building_num'] = building_num
                             data['entry_did'] = entry_did
+                            data['entry_time'] = entry_time
 
                             serializer = EntrySerializer(data=data)
 
@@ -410,29 +411,6 @@ def entry_list(request):
 
         return JsonResponse(json_data, status=201) 
 
-    if request.method == 'POST':
-        if not 'entry_date' in request.GET:
-            return JsonResponse({'msg': 'parmas error'}, status=400)
-        if not 'building_num' in request.GET:
-            return JsonResponse({'msg': 'parmas error'}, status=400)
-        if not 'entry_did' in request.GET:
-            return JsonResponse({'msg': 'parmas error'}, status=400)
-
-        entry_date = request.GET.get('entry_date', None)
-        building_num = request.GET.get('building_num', None)
-        entry_did = request.GET.get('entry_did', None)
-
-        data = {'entry_date': '', 'building_num': '', 'entry_did': ''}
-        data['entry_date'] = entry_date
-        data['building_num'] = building_num
-        data['entry_did'] = entry_did
-
-        serializer = EntrySerializer(data=data)
-
-        if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
-            serializer.save()
-            return JsonResponse(data, status=201)
-
 
 @csrf_exempt
 def entry_admin(request):
@@ -454,6 +432,7 @@ def entry_admin(request):
             entry_data['entry_date'] = entryDB[i].entry_date
             entry_data['building_num'] = entryDB[i].building_num
             entry_data['entry_did'] = entryDB[i].entry_did
+            entry_data['entry_time'] = entryDB[i].entry_time
 
             json_data['entry'].append(entry_data)
 
