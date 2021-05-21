@@ -3,7 +3,9 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from .models import Member
+from .models import Entry
 from .serializers import MemberSerializer
+from .serializers import EntrySerializer
 from subprocess import Popen, PIPE, STDOUT
 from django.http import HttpResponse
 import subprocess
@@ -18,7 +20,7 @@ from asgiref.sync import async_to_sync
 from asgiref.sync import sync_to_async
 
 # Create your views here.
-containerId = "6db8a03cdd8d" #containerId 선언
+containerId = "3ff531ac50c1" #containerId 선언
 tempkey = "이팔청춘의 U-PASS"    #tmpkey 선언
 @csrf_exempt
 # 임시키 확인
@@ -126,7 +128,7 @@ def generate_did(request):
         student = Member.objects.get(user_key = api_key)
         email = student.email
         if checkDB(api_key):
-            timestamp = time.time() #타임스탬프
+            timestamp = int(time.time()) #타임스탬프
             #info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
             wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest() # wallet_name (이메일 + timestamp) 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
@@ -169,7 +171,7 @@ def regenerate_did(request):
             old_wallet_name = student.wallet_id
             did = student.did # did
             email = student.email # 이메일
-            timestamp = time.time() #타임스탬프
+            timestamp = int(time.time()) #타임스탬프
             new_wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest()  # wallet_name (이메일 + timestamp) 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             student_id = request.GET.get('studentId', None)  # 학번 params 가져오기
@@ -262,16 +264,12 @@ def get_entry(request):
         api_key = request.GET.get('key', None)  # key 추출
 
         if checkDB(api_key):
-            student = Member.objects.get(user_key=api_key)
-            wallet_name = student.wallet_id # wallet_name 생성
-            wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             did = request.GET.get('did', None) # user did
             year = request.GET.get('year', None) # 연도
             month = request.GET.get('month', None) # 월
-            day = request.GET.get('day', None) # 일
 
             command = ["sh", "../indy/start_docker/sh_get_attrib.sh",
-                       containerId, wallet_name, wallet_key, did, year, month, day]
+                       containerId, did, year, month]
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -315,6 +313,8 @@ def generate_entry(request):
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
                 process.wait()  # did 발급까지 대기
+                output = process.stdout.read()
+
                 return JsonResponse({'output': str(output)}, status=201)
 
                 with open('/home/deploy/gen_attrib.json')as f:  # server로 복사된 did 열기
@@ -326,6 +326,83 @@ def generate_entry(request):
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
         # return JsonResponse(json_data, status=201)
+
+
+
+@csrf_exempt
+def entry_list(request):
+    if request.method == 'GET':
+        if not 'entry_did' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+
+        entry_did = request.GET.get('entry_did', None)
+        entryDB = Entry.objects.filter(entry_did=entry_did)
+
+        if len(entryDB) == 0:
+            return JsonResponse({'msg': 'not entry'}, status=400)
+
+        json_data = {}
+        json_data['entry'] = []
+
+        for i in range(0, len(entryDB), 1):
+            entry_data = {}
+            entry_data['entry_date'] = entryDB[i].entry_date
+            entry_data['building_num'] = entryDB[i].building_num
+            entry_data['entry_did'] = entryDB[i].entry_did
+
+            json_data['entry'].append(entry_data)
+
+        return JsonResponse(json_data, status=201) 
+
+    if request.method == 'POST':
+        if not 'entry_date' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+        if not 'building_num' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+        if not 'entry_did' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+
+        entry_date = request.GET.get('entry_date', None)
+        building_num = request.GET.get('building_num', None)
+        entry_did = request.GET.get('entry_did', None)
+
+        data = {'entry_date': '', 'building_num': '', 'entry_did': ''}
+        data['entry_date'] = entry_date
+        data['building_num'] = building_num
+        data['entry_did'] = entry_did
+
+        serializer = EntrySerializer(data=data)
+
+        if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
+            serializer.save()
+            return JsonResponse(data, status=201)
+
+
+@csrf_exempt
+def entry_admin(request):
+    if request.method == 'GET':
+        if not 'building_num' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+
+        building_num = request.GET.get('building_num', None)
+        entryDB = Entry.objects.filter(building_num=building_num)
+
+        if len(entryDB) == 0:
+            return JsonResponse({'msg': 'not entry'}, status=400)
+
+        json_data = {}
+        json_data['entry'] = []
+
+        for i in range(0, len(entryDB), 1):
+            entry_data = {}
+            entry_data['entry_date'] = entryDB[i].entry_date
+            entry_data['building_num'] = entryDB[i].building_num
+            entry_data['entry_did'] = entryDB[i].entry_did
+
+            json_data['entry'].append(entry_data)
+
+        return JsonResponse(json_data, status=201)
+
 
 
 '''

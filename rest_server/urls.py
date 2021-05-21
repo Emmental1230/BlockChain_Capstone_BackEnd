@@ -42,5 +42,7 @@ urlpatterns = [
     path('api/findmyinfo/', views.findmyinfo),
     path('api/getentry/', views.get_entry),
     path('api/generateentry/', views.generate_entry),
+    path('api/entry/', views.entry_list),
+    path('api/entryadmin/', views.entry_admin),
     #path('readdid/', readDID),
 ]
