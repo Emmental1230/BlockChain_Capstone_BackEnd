@@ -301,14 +301,15 @@ def generate_entry(request):
 
             wallet_name = student.wallet_id # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-            did = request.GET.get('did', None) # user did
+            admin_did =request.GET.get('admin_did', None)  # 간편 pwd 추출
+            std_did = request.GET.get('std_did', None) # user did
             year = request.GET.get('year', None) # 연도
             building = request.GET.get('building', None) # 출입 건물
             month = request.GET.get('month', None) # 월
             day = request.GET.get('day', None) # 일
         
             command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
-                       containerId, wallet_name, wallet_key, did, building, year, month, day]
+                       containerId, wallet_name, wallet_key, admin_did, std_did, building, year, month, day]
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
