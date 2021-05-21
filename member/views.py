@@ -18,7 +18,7 @@ from asgiref.sync import async_to_sync
 from asgiref.sync import sync_to_async
 
 # Create your views here.
-containerId = "7be7f6cad5de" #containerId 선언
+containerId = "6db8a03cdd8d" #containerId 선언
 tempkey = "이팔청춘의 U-PASS"    #tmpkey 선언
 @csrf_exempt
 # 임시키 확인
@@ -30,7 +30,14 @@ def check_tempkey(request, compare_key):
 
     if api_key != compare_key:
         return JsonResponse({'msg': 'Key is error'}, status=400)
-
+            
+# DB check
+def checkDB(api_key):
+    studentDB = Member.objects.all()
+    if studentDB.filter(user_key=api_key).exists():
+        return True
+    else:
+        return False
 
 @csrf_exempt
 def member_list(request):
@@ -74,13 +81,39 @@ def member_list(request):
 
         return JsonResponse(serializer.errors, status=400)
 
-# DB check
-def checkDB(api_key):
-    studentDB = Member.objects.all()
-    if studentDB.filter(user_key=api_key).exists():
-        return True
-    else:
-        return False
+@csrf_exempt
+def password(request):
+    #간편 비밀번호 저장
+    if request.method == 'POST':
+        if not 'key' in request.GET:
+            return JsonResponse({'msg': 'params error'}, status=400)
+        if not 'SimplePassword' in request.GET:
+            return JsonResponse({'msg': 'params error'}, status=400)
+
+        api_key = request.GET.get('key', None)  # key 추출
+        wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
+        
+        if checkDB(api_key):
+            student = Member.objects.get(user_key = api_key)
+            student.wallet_key = wallet_key
+            student.save()
+            return JsonResponse({'msg':"save complete"},status=201)
+        else:
+            return JsonResponse({'msg': 'Key is error'}, status=400)
+
+    #간편 비밀번호 찾기
+    elif request.method == 'GET':
+        if not 'key' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+
+        api_key = request.GET.get('key', None)  # key 추출
+        if checkDB(api_key):
+            student = Member.objects.get(user_key=api_key)  # 해당 학생 정보 저장
+            wallet_key = student.wallet_key
+            return JsonResponse({'wallet_key': wallet_key}, status=201)
+        else:
+            return JsonResponse({'msg': 'Key is error'}, status=400)
+
 
 @csrf_exempt
 # did 발급
@@ -97,7 +130,8 @@ def generate_did(request):
             #info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
             wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest() # wallet_name (이메일 + timestamp) 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-            command = ["sh","../indy/start_docker/sh_generate_did.sh", containerId, wallet_name, wallet_key] #did발급 명령어
+            student_id = request.GET.get('studentId', None)  # 학번 params 가져오기
+            command = ["sh","../indy/start_docker/sh_generate_did.sh", containerId, wallet_name, wallet_key, student_id] #did발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -105,8 +139,8 @@ def generate_did(request):
 
                 with open('/home/deploy/data.json')as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
-                    # os.remove("/home/deploy/data.json") #생성된 파일 삭제
-                    if json_data['error'] == 'Error':
+                    error = json_data['error']
+                    if error == 'Error':
                         return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
                     
                     student.did = json_data['did']  #Did 저장
@@ -119,7 +153,7 @@ def generate_did(request):
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
-        return JsonResponse(json_data, status=201)
+        return JsonResponse({'did':student.did , 'error': error}, status=201)
 
 @csrf_exempt
 #did 재발급
@@ -132,35 +166,37 @@ def regenerate_did(request):
         if checkDB(api_key):
             #DB에서 key 가지고 email, did 가져오기
             student = Member.objects.get(user_key=api_key)
+            old_wallet_name = student.wallet_id
             did = student.did # did
             email = student.email # 이메일
             timestamp = time.time() #타임스탬프
-            wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest()  # wallet_name (이메일 + timestamp) 생성
+            new_wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest()  # wallet_name (이메일 + timestamp) 생성
+            wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             student_id = request.GET.get('studentId', None)  # 학번 params 가져오기
-            
+
             #DB에 wallet_name 저장 필요
-            command = ["sh","../indy/start_docker/sh_regenerate_did.sh", containerId, email, student_id, did] #did 재발급 명령어
+            command = ["sh","../indy/start_docker/sh_regenerate_did.sh", containerId, did, student_id, email, new_wallet_name, wallet_key ] #did 재발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
                 process.wait()  # did 발급까지 대기
+                output = process.stdout.read()
+                # return JsonResponse({'output': str(output)}, status=400)
 
-                with open('/home/deploy/data.json')as f:  # server로 복사된 did 열기
+                with open('/home/deploy/' + str(student_id) + 'NewWalletID.json') as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
-                    # os.remove("/home/deploy/data.json") #생성된 파일 삭제
+                    # 에러 추가 
                     if json_data['error'] == 'Error':
                         return JsonResponse({'msg': 'DID 재발급 오류'}, status=400)
-                    
-                    student.wallet_id = wallet_name # 새로운 wallet_name 저장
+                    new_wallet_name=json_data['new_wallet']
+                    student.wallet_id = new_wallet_name # 새로운 wallet_name 저장
                     student.save()
-                    os.remove("/home/deploy/data.json") # 생성된 파일 삭제
+                    os.remove('/home/deploy/' + str(student_id) + 'NewWalletID.json') # 생성된 파일 삭제
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
-            
-            
-        return JsonResponse(json_data, status=201)
+        return JsonResponse({'did':student.did , 'new_wallet_name': new_wallet_name, 'old_wallet_name':old_wallet_name }, status=201)
 
 @csrf_exempt
 # did 찾기
@@ -171,10 +207,11 @@ def get_did(request):
         api_key = request.GET.get('key', None)  # key 추출
 
         if checkDB(api_key):
-            wallet_name = api_key  # wallet_name 생성
+            student = Member.objects.get(user_key=api_key)
+            wallet_name = student.wallet_id  # wallet_name 디비에서 찾아오기
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             command = ["sh", "../indy/start_docker/sh_get_did.sh",
-                        containerId, wallet_name, wallet_key]  # did찾기 명령어 origin : 1b57c8002249    YG : f57bccba3b28  Kiwoo : 
+                        containerId, wallet_name, wallet_key]  
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -189,7 +226,7 @@ def get_did(request):
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
-        return JsonResponse(json_data, status=201, safe=False)
+        return JsonResponse(json_data, status=201)
 
 
 @csrf_exempt
@@ -226,7 +263,8 @@ def get_entry(request):
         api_key = request.GET.get('key', None)  # key 추출
 
         if checkDB(api_key):
-            wallet_name = api_key # wallet_name 생성
+            student = Member.objects.get(user_key=api_key)
+            wallet_name = student.wallet_id # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             did = request.GET.get('did', None)
             year = request.GET.get('year', None)
@@ -260,7 +298,9 @@ def generate_entry(request):
         api_key = request.GET.get('key', None)  # key 추출
         
         if checkDB(api_key):
-            wallet_name = api_key # wallet_name 생성
+            student = Member.objects.get(user_key=api_key)
+
+            wallet_name = student.wallet_id # wallet_name 생성
             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
             did = request.GET.get('did', None)
             year = request.GET.get('year', None)

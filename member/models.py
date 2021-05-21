@@ -5,5 +5,6 @@ class Member(models.Model):
     info_hash = models.CharField(max_length=200, null=True)
     user_key = models.CharField(max_length=200, unique=False, null=True)
     wallet_id = models.CharField(max_length=200, unique=False, null=True)
+    wallet_key = models.CharField(max_length=30, null=True)
     did = models.CharField(max_length=200, unique=False, null=True)
     did_time_hash =  models.CharField(max_length=200, unique=False, null=True)
