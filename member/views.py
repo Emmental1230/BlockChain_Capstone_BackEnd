@@ -357,8 +357,9 @@ def generate_entry(request):
                             entry_date = json_data['entry_date']
                             building_num = json_data['building_num']
                             entry_did = json_data['entry_did']
+                            entry_time = json_data['entry_time']
 
-                            data = {'entry_date': '', 'building_num': '', 'entry_did': ''}
+                            data = {'entry_date': '', 'building_num': '', 'entry_did': '', 'entry_time' : ''}
                             data['entry_date'] = entry_date
                             data['building_num'] = building_num
                             data['entry_did'] = entry_did

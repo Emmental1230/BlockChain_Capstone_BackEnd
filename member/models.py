@@ -13,3 +13,4 @@ class Entry(models.Model) :
     entry_date = models.CharField(max_length=50, null=True)
     building_num = models.CharField(max_length=30, null=True)
     entry_did = models.CharField(max_length=100, null=True)
+    entry_time = models.CharField(max_length=20, null=True)
