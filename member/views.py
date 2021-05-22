@@ -16,6 +16,7 @@ import random
 import base62
 import asyncio
 import time
+from django.core.paginator import Paginator
 from asgiref.sync import async_to_sync
 from asgiref.sync import sync_to_async
 
@@ -105,6 +106,12 @@ def member_list(request):
             return JsonResponse(user_key_json, status=201)
 
         return JsonResponse(serializer.errors, status=400)
+    if request.method == 'GET':
+        email = request.GET.get('email', None)
+        
+        studentDB = Member.objects.get(email=email)
+        return JsonResponse(studentDB.user_key, status=201, safe=False)  
+
 
 @csrf_exempt
 def password(request):
@@ -135,6 +142,9 @@ def password(request):
         if checkDB(api_key):
             student = Member.objects.get(user_key=api_key)  # 해당 학생 정보 저장
             wallet_key = student.wallet_key
+            if wallet_key is None:    # wallet_key 값이 DB에 저장되어 있지 않을때
+                return JsonResponse({'msg': 'wallet_key is empty'}, status=400)
+
             return JsonResponse({'wallet_key': wallet_key}, status=201)
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
@@ -397,33 +407,7 @@ def entry_list(request):
         entryDB = Entry.objects.filter(entry_did=entry_did)
 
         if len(entryDB) == 0:
-            return JsonResponse({'msg': 'not entry'}, status=400)
-
-        json_data = {}
-        json_data['entry'] = []
-
-        for i in range(0, len(entryDB), 1):
-            entry_data = {}
-            entry_data['entry_date'] = entryDB[i].entry_date
-            entry_data['building_num'] = entryDB[i].building_num
-            entry_data['entry_did'] = entryDB[i].entry_did
-
-            json_data['entry'].append(entry_data)
-
-        return JsonResponse(json_data, status=201) 
-
-
-@csrf_exempt
-def entry_admin(request):
-    if request.method == 'GET':
-        if not 'building_num' in request.GET:
-            return JsonResponse({'msg': 'parmas error'}, status=400)
-
-        building_num = request.GET.get('building_num', None)
-        entryDB = Entry.objects.filter(building_num=building_num)
-
-        if len(entryDB) == 0:
-            return JsonResponse({'msg': 'not entry'}, status=400)
+            return JsonResponse({'msg': 'has no entry'}, status=400)
 
         json_data = {}
         json_data['entry'] = []
@@ -437,8 +421,55 @@ def entry_admin(request):
 
             json_data['entry'].append(entry_data)
 
-        return JsonResponse(json_data, status=201)
+        return JsonResponse(json_data, status=201) 
 
+
+@csrf_exempt
+def entry_admin(request):
+    if request.method == 'GET':
+        if not 'building_num' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+        if not 'page_num' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+
+        building_num = request.GET.get('building_num', None)
+        entryDB = Entry.objects.filter(building_num=building_num)
+
+        if len(entryDB) == 0:
+            return JsonResponse({'msg': 'has no entry'}, status=400)
+
+        page_num = request.GET.get('page_num', None)
+        paginator = Paginator(entryDB, 10)
+        posts_entry = paginator.get_page(page_num)
+
+        #serializer = EntrySerializer(data=posts_entry, many=True)
+        #if serializer.is_valid():
+            #res = {
+            #    'entry' : serializer.data       
+            #}
+            #return JsonResponse(res, safe=False)
+
+        #else:
+        #    return JsonResponse({'msg':'serializer error'}, status=400)
+
+
+        #return HttpResponse(len(posts_entry), status=201)
+
+        
+        json_data = {}
+        json_data['entry'] = []
+
+        for i in range(0, len(posts_entry), 1):
+            entry_data = {}
+            entry_data['entry_date'] = entryDB[i].entry_date
+            entry_data['building_num'] = entryDB[i].building_num
+            entry_data['entry_did'] = entryDB[i].entry_did
+            entry_data['entry_time'] = entryDB[i].entry_time
+
+            json_data['entry'].append(entry_data)
+
+        return JsonResponse(json_data, status=201)
+        
 
 
 '''
