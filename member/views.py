@@ -68,18 +68,11 @@ def check_timestamp(qr):
 @csrf_exempt
 def member_list(request):
     # 회원가입 요청
-    if request.method == 'POST':
-        check_tempkey(request, hashlib.sha256(tempkey.encode()))
+    if request.method == 'GET':
         stdnum = request.GET.get('stdnum', None)
         major = request.GET.get('major', None)
         name = request.GET.get('name', None)
         email = request.GET.get('email', None)
-
-        studentDB = Member.objects.all()
-
-        # 중복 회원여부 확인
-        if studentDB.filter(email=email).exists():
-            return JsonResponse({'msg': 'Email is already exists'}, status=400)
 
         # info_hash 해시 하는 부분
         info_dump = str(stdnum) + str(major) + str(name) + str(email)
@@ -94,24 +87,110 @@ def member_list(request):
         user_key_json = {'user_key': ''}
         user_key_json['user_key'] = user_key
 
-        data = {'email': '', 'info_hash': '', 'user_key': ''}
-        data['email'] = email
-        data['info_hash'] = info_hash
-        data['user_key'] = user_key
-
-        serializer = MemberSerializer(data=data)
-
-        if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
-            serializer.save()
-            return JsonResponse(user_key_json, status=201)
-
-        return JsonResponse(serializer.errors, status=400)
-    if request.method == 'GET':
-        email = request.GET.get('email', None)
+        return JsonResponse(user_key_json, status=201)
         
-        studentDB = Member.objects.get(email=email)
-        return JsonResponse(studentDB.user_key, status=201, safe=False)  
+        # if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
+        #     serializer.save()
+        #     return JsonResponse(user_key_json, status=201)
 
+        # return JsonResponse(serializer.errors, status=400)
+        
+    # did 발급
+
+    if request.method == 'POST':
+        check_tempkey(request, hashlib.sha256(tempkey.encode()))
+        email = request.GET.get('email', None)
+        studentDB = Member.objects.all()
+
+        # 중복 회원여부 확인
+        if studentDB.filter(email=email).exists():
+            return JsonResponse({'msg': 'Email is already exists'}, status=400)
+        
+        user_key = request.GET.get('key', None)  # key 추출
+        stdnum = request.GET.get('stdnum', None)
+        major = request.GET.get('major', None)
+        name = request.GET.get('name', None)
+        info_dump = str(stdnum) + str(major) + str(name) + str(email)
+        info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
+        timestamp = int(time.time()) #타임스탬프
+        wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest() # wallet_name (이메일 + timestamp) 생성
+        wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
+        student_id = request.GET.get('studentId', None)  # 학번 params 가져오기
+        command = ["sh","../indy/start_docker/sh_generate_did.sh", containerId, wallet_name, wallet_key, student_id] #did발급 명령어
+        try:
+            # 명령어 인자로 하여 Popen 실행
+            process = Popen(command, stdout=PIPE, stderr=PIPE)
+            process.wait()  # did 재발급까지 대기
+
+            with open('../../deploy/data.json')as f:  # server로 복사된 did 열기
+                json_data = json.load(f)  # json_data에 json으로 저장
+                error = json_data['error']
+                if error == 'Error':
+                    return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
+                os.remove("/home/deploy/data.json") #생성된 파일 삭제
+                did = json_data['did']  #Did 저장
+                cmp1 = str(did) + str(wallet_key)
+                did_time_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
+                    
+                data = {'email': '', 'info_hash': '', 'user_key': '', 'wallet_id':'',  'did':'', 'did_time_hash':''}
+                data['email'] = email
+                data['info_hash'] = info_hash
+                data['user_key'] = user_key
+                data['wallet_id'] = wallet_name
+                data['did'] = did
+                data['did_time_hash'] = did_time_hash
+
+                serializer = MemberSerializer(data=data)
+
+                if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인    
+                    serializer.save()
+                    return JsonResponse({'did': did , 'error': error}, status=201)
+                    
+        except Exception as e:
+            return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+        
+
+
+# @csrf_exempt
+# def generate_did(request):
+#     if request.method == 'POST':
+#         if not 'key' in request.GET:
+#             return JsonResponse({'msg': 'parmas error'}, status=400)
+
+#         api_key = request.GET.get('key', None)  # key 추출
+#         student = Member.objects.get(user_key = api_key)
+#         email = student.email
+#         if checkDB(api_key):
+#             timestamp = int(time.time()) #타임스탬프
+#             #info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
+#             wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest() # wallet_name (이메일 + timestamp) 생성
+#             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
+#             student_id = request.GET.get('studentId', None)  # 학번 params 가져오기
+#             command = ["sh","../indy/start_docker/sh_generate_did.sh", containerId, wallet_name, wallet_key, student_id] #did발급 명령어
+#             try:
+#                 # 명령어 인자로 하여 Popen 실행
+#                 process = Popen(command, stdout=PIPE, stderr=PIPE)
+#                 process.wait()  # did 재발급까지 대기
+
+#                 with open('../../deploy/data.json')as f:  # server로 복사된 did 열기
+#                     json_data = json.load(f)  # json_data에 json으로 저장
+#                     error = json_data['error']
+#                     if error == 'Error':
+#                         return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
+                    
+#                     student.did = json_data['did']  #Did 저장
+#                     student.wallet_id = wallet_name # 새로운 wallet_name 저장
+#                     cmp1 =str(student.did) + str(wallet_key)
+#                     student.did_time_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
+#                     student.save()
+
+#                     os.remove("/home/deploy/data.json") #생성된 파일 삭제
+                    
+#             except Exception as e:
+#                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+#         else:
+#             return JsonResponse({'msg': 'Key is error'}, status=400)
+#         return JsonResponse({'did':student.did , 'error': error}, status=201)
 
 @csrf_exempt
 def password(request):
@@ -149,48 +228,6 @@ def password(request):
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
-
-@csrf_exempt
-# did 발급
-def generate_did(request):
-    if request.method == 'POST':
-        if not 'key' in request.GET:
-            return JsonResponse({'msg': 'parmas error'}, status=400)
-
-        api_key = request.GET.get('key', None)  # key 추출
-        student = Member.objects.get(user_key = api_key)
-        email = student.email
-        if checkDB(api_key):
-            timestamp = int(time.time()) #타임스탬프
-            #info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
-            wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest() # wallet_name (이메일 + timestamp) 생성
-            wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-            student_id = request.GET.get('studentId', None)  # 학번 params 가져오기
-            command = ["sh","../indy/start_docker/sh_generate_did.sh", containerId, wallet_name, wallet_key, student_id] #did발급 명령어
-            try:
-                # 명령어 인자로 하여 Popen 실행
-                process = Popen(command, stdout=PIPE, stderr=PIPE)
-                process.wait()  # did 재발급까지 대기
-
-                with open('../../deploy/data.json')as f:  # server로 복사된 did 열기
-                    json_data = json.load(f)  # json_data에 json으로 저장
-                    error = json_data['error']
-                    if error == 'Error':
-                        return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
-                    
-                    student.did = json_data['did']  #Did 저장
-                    student.wallet_id = wallet_name # 새로운 wallet_name 저장
-                    cmp1 =str(student.did) + str(wallet_key)
-                    student.did_time_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
-                    student.save()
-
-                    os.remove("/home/deploy/data.json") #생성된 파일 삭제
-                    
-            except Exception as e:
-                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
-        else:
-            return JsonResponse({'msg': 'Key is error'}, status=400)
-        return JsonResponse({'did':student.did , 'error': error}, status=201)
 
 @csrf_exempt
 #did 재발급
@@ -286,7 +323,6 @@ def findmyinfo(request):
             # 제대로된 정보 입력했는지 확인
             if studentDB.filter(info_hash=info_hash).exists():
                 std = Member.objects.get(info_hash=info_hash)  # 해당 학생 정보 저장
-                return JsonResponse({'user_key': std.user_key}, status=201)
             else:
                 return JsonResponse({'msg': '잘못된 정보를 입력하였습니다.'}, status=400)
         else:
