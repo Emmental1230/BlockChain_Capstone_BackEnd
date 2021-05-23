@@ -488,9 +488,9 @@ def entry_admin(request):
         order_by = request.GET.get('order', None)
         building_num = request.GET.get('building_num', None)
 
-        if order_by == '오름차순':
+        if order_by == 'Asc':
             entryDB = Entry.objects.filter(building_num=building_num).order_by('id')
-        elif order_by == '내림차순':
+        elif order_by == 'Desc':
             entryDB = Entry.objects.filter(building_num=building_num).order_by('-id')
         else:
             return JsonResponse({'msg': 'order param error'}, status=400)
@@ -500,10 +500,14 @@ def entry_admin(request):
 
         page_num = request.GET.get('page_num', None)
         paginator = Paginator(entryDB, 10)
+        total_page = paginator.num_pages
+        total_count = paginator.count
         posts_entry = paginator.get_page(page_num)
-        
-        json_data = {}
+
+        json_data = {'entry':'','total_page':'', 'total_count':total_count}
         json_data['entry'] = []
+        json_data['total_page']= total_page
+        json_data['total_count']= total_count
 
         for i in range(0, len(posts_entry), 1):
             entry_data = {}
