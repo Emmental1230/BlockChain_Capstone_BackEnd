@@ -482,9 +482,18 @@ def entry_admin(request):
             return JsonResponse({'msg': 'parmas error'}, status=400)
         if not 'page_num' in request.GET:
             return JsonResponse({'msg': 'parmas error'}, status=400)
+        if not 'order' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
 
+        order_by = request.GET.get('order', None)
         building_num = request.GET.get('building_num', None)
-        entryDB = Entry.objects.filter(building_num=building_num)
+
+        if order_by == '오름차순':
+            entryDB = Entry.objects.filter(building_num=building_num).order_by('id')
+        elif order_by == '내림차순':
+            entryDB = Entry.objects.filter(building_num=building_num).order_by('-id')
+        else:
+            return JsonResponse({'msg': 'order param error'}, status=400)
 
         if len(entryDB) == 0:
             return JsonResponse({'msg': 'has no entry'}, status=400)
@@ -492,30 +501,16 @@ def entry_admin(request):
         page_num = request.GET.get('page_num', None)
         paginator = Paginator(entryDB, 10)
         posts_entry = paginator.get_page(page_num)
-
-        #serializer = EntrySerializer(data=posts_entry, many=True)
-        #if serializer.is_valid():
-            #res = {
-            #    'entry' : serializer.data       
-            #}
-            #return JsonResponse(res, safe=False)
-
-        #else:
-        #    return JsonResponse({'msg':'serializer error'}, status=400)
-
-
-        #return HttpResponse(len(posts_entry), status=201)
-
         
         json_data = {}
         json_data['entry'] = []
 
         for i in range(0, len(posts_entry), 1):
             entry_data = {}
-            entry_data['entry_date'] = entryDB[i].entry_date
-            entry_data['building_num'] = entryDB[i].building_num
-            entry_data['entry_did'] = entryDB[i].entry_did
-            entry_data['entry_time'] = entryDB[i].entry_time
+            entry_data['entry_date'] = posts_entry[i].entry_date
+            entry_data['building_num'] = posts_entry[i].building_num
+            entry_data['entry_did'] = posts_entry[i].entry_did
+            entry_data['entry_time'] = posts_entry[i].entry_time
 
             json_data['entry'].append(entry_data)
 
