@@ -64,16 +64,31 @@ def check_timestamp(qr):
     else:
         return False
 
+# 올바른 키인지 체크
+@csrf_exempt
+def auth_key(request):
+    if request.method == 'GET':
+        key = request.GET.get('key', None)
+        studentDB = Member.objects.all()
+        if studentDB.filter(user_key=key).exists():
+            return JsonResponse({'msg': 'This is the correct key'}, status=201)
+        else:
+            return JsonResponse({'msg': 'Invalid key'}, status=400)
+
 
 @csrf_exempt
 def member_list(request):
-    # 회원가입 요청
+    # 키 발급
     if request.method == 'GET':
+        studentDB = Member.objects.all()
         stdnum = request.GET.get('stdnum', None)
         major = request.GET.get('major', None)
         name = request.GET.get('name', None)
         email = request.GET.get('email', None)
-
+        
+        if studentDB.filter(email=email).exists():  
+            return JsonResponse({'msg': 'Email is already exists'}, status=400)
+        
         # info_hash 해시 하는 부분
         info_dump = str(stdnum) + str(major) + str(name) + str(email)
         info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
@@ -95,8 +110,7 @@ def member_list(request):
 
         # return JsonResponse(serializer.errors, status=400)
         
-    # did 발급
-
+    # 회원가입  요청 +  did 발급
     if request.method == 'POST':
         check_tempkey(request, hashlib.sha256(tempkey.encode()))
         email = request.GET.get('email', None)
@@ -307,7 +321,7 @@ def get_did(request):
 @csrf_exempt
 # 회원찾기
 def findmyinfo(request):
-    if request.method == 'POST':
+    if request.method == 'GET':
         check_tempkey(request, hashlib.sha256(tempkey.encode()))
         stdnum = request.GET.get('stdnum', None)
         major = request.GET.get('major', None)
@@ -323,6 +337,7 @@ def findmyinfo(request):
             # 제대로된 정보 입력했는지 확인
             if studentDB.filter(info_hash=info_hash).exists():
                 std = Member.objects.get(info_hash=info_hash)  # 해당 학생 정보 저장
+                return JsonResponse({'user_key': std.user_key}, status=201)
             else:
                 return JsonResponse({'msg': '잘못된 정보를 입력하였습니다.'}, status=400)
         else:
