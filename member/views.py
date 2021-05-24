@@ -54,7 +54,7 @@ def check_did(did, timestamp, hashedData):
     else:
         return False
 
-# TimeStamp 검증( dif < 15 )
+# TimeStamp 검증( 오차허용범위  ±15sec )
 def check_timestamp(qr):
     api_timestamp = time.time()
     api = int(api_timestamp)
@@ -436,7 +436,7 @@ def entry_admin(request):
         order_by = request.GET.get('order', None) # 오름차순, 내림차순 params GET
         building_num = request.GET.get('building_num', None)  # 강의동 번호 GET
 
-        # 전달 받은 오름차순, 내림차순에 따라 DB 튜플 불러오기
+        # 정렬 방식에 따라 DB 튜플 불러오기
         if order_by == 'Asc':
             entryDB = Entry.objects.filter(building_num=building_num).order_by('id')
         elif order_by == 'Desc':
