@@ -20,11 +20,10 @@ from django.core.paginator import Paginator
 from asgiref.sync import async_to_sync
 from asgiref.sync import sync_to_async
 
-# Create your views here.
 containerId = "de0aedfd8579" #containerId 선언
 tempkey = "이팔청춘의 U-PASS"    #tmpkey 선언
 @csrf_exempt
-# 임시키 확인
+# 임시키 검증
 def check_tempkey(request, compare_key):
     if not 'key' in request.GET:
         return JsonResponse({'msg': 'parmas error'}, status=400)
@@ -34,7 +33,7 @@ def check_tempkey(request, compare_key):
     if api_key != compare_key:
         return JsonResponse({'msg': 'Key is error'}, status=400)
             
-# DB check
+# Key가 DB에 존재하는지 확인
 def checkDB(api_key):
     studentDB = Member.objects.all()
     if studentDB.filter(user_key=api_key).exists():
@@ -42,7 +41,7 @@ def checkDB(api_key):
     else:
         return False
 
-
+# DID 검증
 def check_did(did, timestamp, hashedData):
     #hashedData : qr에 담겨진 H(H(did + 간편비번))
 
@@ -55,7 +54,7 @@ def check_did(did, timestamp, hashedData):
     else:
         return False
 
-
+# TimeStamp 검증( dif < 15 )
 def check_timestamp(qr):
     api_timestamp = time.time()
     api = int(api_timestamp)
@@ -75,7 +74,7 @@ def auth_key(request):
         else:
             return JsonResponse({'msg': 'Invalid key'}, status=400)
 
-
+# 회원 키 GET 및 회원 가입 POST
 @csrf_exempt
 def member_list(request):
     # 키 발급
@@ -86,7 +85,7 @@ def member_list(request):
         name = request.GET.get('name', None)
         email = request.GET.get('email', None)
         
-        if studentDB.filter(email=email).exists():  
+        if studentDB.filter(email=email).exists():  # params로 전달받은 이메일이 DB에 존재하는지 확인
             return JsonResponse({'msg': 'Email is already exists'}, status=400)
         
         # info_hash 해시 하는 부분
@@ -104,11 +103,6 @@ def member_list(request):
 
         return JsonResponse(user_key_json, status=201)
         
-        # if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
-        #     serializer.save()
-        #     return JsonResponse(user_key_json, status=201)
-
-        # return JsonResponse(serializer.errors, status=400)
         
     # 회원가입  요청 +  did 발급
     if request.method == 'POST':
@@ -164,48 +158,7 @@ def member_list(request):
             return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         
 
-
-# @csrf_exempt
-# def generate_did(request):
-#     if request.method == 'POST':
-#         if not 'key' in request.GET:
-#             return JsonResponse({'msg': 'parmas error'}, status=400)
-
-#         api_key = request.GET.get('key', None)  # key 추출
-#         student = Member.objects.get(user_key = api_key)
-#         email = student.email
-#         if checkDB(api_key):
-#             timestamp = int(time.time()) #타임스탬프
-#             #info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
-#             wallet_name = hashlib.sha256((email + str(timestamp)).encode()).hexdigest() # wallet_name (이메일 + timestamp) 생성
-#             wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
-#             student_id = request.GET.get('studentId', None)  # 학번 params 가져오기
-#             command = ["sh","../indy/start_docker/sh_generate_did.sh", containerId, wallet_name, wallet_key, student_id] #did발급 명령어
-#             try:
-#                 # 명령어 인자로 하여 Popen 실행
-#                 process = Popen(command, stdout=PIPE, stderr=PIPE)
-#                 process.wait()  # did 재발급까지 대기
-
-#                 with open('../../deploy/data.json')as f:  # server로 복사된 did 열기
-#                     json_data = json.load(f)  # json_data에 json으로 저장
-#                     error = json_data['error']
-#                     if error == 'Error':
-#                         return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
-                    
-#                     student.did = json_data['did']  #Did 저장
-#                     student.wallet_id = wallet_name # 새로운 wallet_name 저장
-#                     cmp1 =str(student.did) + str(wallet_key)
-#                     student.did_time_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
-#                     student.save()
-
-#                     os.remove("/home/deploy/data.json") #생성된 파일 삭제
-                    
-#             except Exception as e:
-#                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
-#         else:
-#             return JsonResponse({'msg': 'Key is error'}, status=400)
-#         return JsonResponse({'did':student.did , 'error': error}, status=201)
-
+# 간편 비밀번호 저장(POST) 및 찾기(GET)
 @csrf_exempt
 def password(request):
     #간편 비밀번호 저장
@@ -218,6 +171,7 @@ def password(request):
         api_key = request.GET.get('key', None)  # key 추출
         wallet_key = request.GET.get('SimplePassword', None)  # 간편 pwd 추출
         
+        # DB에 해당 키가 존재한다면, 해당 튜플에 간편비밀번호 저장
         if checkDB(api_key):
             student = Member.objects.get(user_key = api_key)
             student.wallet_key = wallet_key
@@ -232,7 +186,7 @@ def password(request):
             return JsonResponse({'msg': 'parmas error'}, status=400)
 
         api_key = request.GET.get('key', None)  # key 추출
-        if checkDB(api_key):
+        if checkDB(api_key):   # 해당 키가 DB에 존재 한다면,
             student = Member.objects.get(user_key=api_key)  # 해당 학생 정보 저장
             wallet_key = student.wallet_key
             if wallet_key is None:    # wallet_key 값이 DB에 저장되어 있지 않을때
@@ -242,9 +196,8 @@ def password(request):
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
-
+# DID 재발급
 @csrf_exempt
-#did 재발급
 def regenerate_did(request):
     if request.method == 'POST':
         if not 'key' in request.GET:
@@ -269,7 +222,6 @@ def regenerate_did(request):
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
                 process.wait()  # did 발급까지 대기
                 output = process.stdout.read()
-                # return JsonResponse({'output': str(output)}, status=400)
 
                 with open('/home/deploy/' + str(student_id) + 'NewWalletID.json') as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
@@ -288,8 +240,8 @@ def regenerate_did(request):
             return JsonResponse({'msg': 'Key is error'}, status=400)
         return JsonResponse({'did':student.did , 'new_wallet_name': new_wallet_name, 'old_wallet_name':old_wallet_name }, status=201)
 
+# DID 찾기
 @csrf_exempt
-# did 찾기
 def get_did(request):
     if request.method == 'GET':
         if not 'key' in request.GET:
@@ -310,7 +262,6 @@ def get_did(request):
                     json_data = json.load(f)  # json_data에 json으로 저장
                     if json_data['error'] == 'Error':
                         return JsonResponse({'msg': 'DID를 찾을 수 없습니다.'}, status=400)
-                    # os.remove("/home/deploy/student_did.json") #생성된 파일 삭제
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
@@ -318,8 +269,8 @@ def get_did(request):
         return JsonResponse(json_data, status=201)
 
 
+#회원 찾기
 @csrf_exempt
-# 회원찾기
 def findmyinfo(request):
     if request.method == 'GET':
         check_tempkey(request, hashlib.sha256(tempkey.encode()))
@@ -328,8 +279,8 @@ def findmyinfo(request):
         name = request.GET.get('name', None)
         email = request.GET.get('email', None)
 
-        info_dump = str(stdnum) + str(major) + str(name) + str(email)
-        info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
+        info_dump = str(stdnum) + str(major) + str(name) + str(email) #전달 받은 학번,전공,이름,이메일 concat
+        info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest() #해쉬
         studentDB = Member.objects.all()
 
         # email 정보가 DB에 있는지 확인
@@ -343,8 +294,9 @@ def findmyinfo(request):
         else:
             return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
 
+
+#출입 여부 찾기(Block Chain 상의 tx)
 @csrf_exempt
-# 출입 여부 찾기
 def get_entry(request):
     if request.method == 'GET':
         if not 'key' in request.GET:
@@ -376,8 +328,8 @@ def get_entry(request):
         return JsonResponse(json_data, status=201)
 
 
-@csrf_exempt
 # 출입 여부 등록
+@csrf_exempt
 def generate_entry(request):
     if request.method == 'POST':
         if not 'key' in request.GET:
@@ -410,7 +362,6 @@ def generate_entry(request):
 
                         with open('/home/deploy/gen_attrib.json')as f:  # server로 복사된 did 열기
                             json_data = json.load(f)  # json_data에 json으로 저장
-                            # os.remove("/home/deploy/gen_attrib.json") #생성된 파일 삭제
 
                             if json_data['error'] == 'Error':
                                 return JsonResponse({'msg': 'error'}, status=400)
@@ -431,8 +382,6 @@ def generate_entry(request):
                             if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
                                 serializer.save()
 
-
-
                         return JsonResponse({'msg': 'generate entry complete'}, status=201)
                     except Exception as e:
                         return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
@@ -444,10 +393,8 @@ def generate_entry(request):
         else:
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
-        # return JsonResponse(json_data, status=201)
 
-
-
+# 사용자 기준 출입 기록 GET
 @csrf_exempt
 def entry_list(request):
     if request.method == 'GET':
@@ -475,6 +422,7 @@ def entry_list(request):
         return JsonResponse(json_data, status=201) 
 
 
+# 관리자 기준 출입 기록 GET(강의동 별)
 @csrf_exempt
 def entry_admin(request):
     if request.method == 'GET':
@@ -485,9 +433,10 @@ def entry_admin(request):
         if not 'order' in request.GET:
             return JsonResponse({'msg': 'parmas error'}, status=400)
 
-        order_by = request.GET.get('order', None)
-        building_num = request.GET.get('building_num', None)
+        order_by = request.GET.get('order', None) # 오름차순, 내림차순 params GET
+        building_num = request.GET.get('building_num', None)  # 강의동 번호 GET
 
+        # 전달 받은 오름차순, 내림차순에 따라 DB 튜플 불러오기
         if order_by == 'Asc':
             entryDB = Entry.objects.filter(building_num=building_num).order_by('id')
         elif order_by == 'Desc':
@@ -498,12 +447,14 @@ def entry_admin(request):
         if len(entryDB) == 0:
             return JsonResponse({'msg': 'has no entry'}, status=400)
 
+        # 페이지네이션 적용
         page_num = request.GET.get('page_num', None)
         paginator = Paginator(entryDB, 10)
         total_page = paginator.num_pages
         total_count = paginator.count
         posts_entry = paginator.get_page(page_num)
 
+        # JSON 형태로 만들고, Response
         json_data = {'entry':'','total_page':'', 'total_count':total_count}
         json_data['entry'] = []
         json_data['total_page']= total_page
@@ -521,13 +472,3 @@ def entry_admin(request):
         return JsonResponse(json_data, status=201)
         
 
-
-'''
-@csrf_exempt
-def member(request, word):
-    #학생 수정
-    obj = Member.objects.get(email_hash=word)
-    if request.method == 'GET':
-        serializer = MemberSerializer(obj)
-        return JsonResponse(serializer.data, status=201, safe=False)  
-'''
