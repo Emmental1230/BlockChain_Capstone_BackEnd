@@ -47,14 +47,14 @@ def check_db(api_key):
 # DID 검증
 
 
-def check_did(did, timestamp, hashedData):
+def check_did(did, time_stamp, hashed_data):
     # hashedData : qr에 담겨진 H(H(did + 간편비번))
 
     student = Member.objects.get(did=did)
-    cmp1 = str(student.did_time_hash) + str(timestamp)
+    cmp1 = str(student.did_time_hash) + str(time_stamp)
     cmp1_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
 
-    if hashedData == cmp1_hash:
+    if hashed_data == cmp1_hash:
         return True
     else:
         return False
@@ -130,10 +130,10 @@ def member_list(request):
         name = request.GET.get('name', None)
         info_dump = str(std_num) + str(major) + str(name) + str(email)
         info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
-        timestamp = int(time.time())  # 타임스탬프
+        time_stamp = int(time.time())  # 타임스탬프
         # wallet_name (이메일 + timestamp) 생성
         wallet_name = hashlib.sha256(
-            (email + str(timestamp)).encode()).hexdigest()
+            (email + str(time_stamp)).encode()).hexdigest()
         wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
         command = ["sh", "../indy/start_docker/sh_generate_did.sh",
                    container_id, wallet_name, wallet_key, std_num]  # did발급 명령어
@@ -228,10 +228,10 @@ def regenerate_did(request):
             old_wallet_name = student.wallet_id
             did = student.did  # did
             email = student.email  # 이메일
-            timestamp = int(time.time())  # 타임스탬프
+            time_stamp = int(time.time())  # 타임스탬프
             # wallet_name (이메일 + timestamp) 생성
             new_wallet_name = hashlib.sha256(
-                (email + str(timestamp)).encode()).hexdigest()
+                (email + str(time_stamp)).encode()).hexdigest()
             wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
             std_num = request.GET.get('std_num', None)  # 학번 params 가져오기
 
@@ -384,7 +384,7 @@ def generate_entry(request):
             time_stamp = request.GET.get('time_stamp', None)  # timestamp
             hashed_data = request.GET.get('hashed_data', None)  # hashedData
 
-            if check_timestamp(timestamp):  # timestamp 유효범위 검증
+            if check_timestamp(time_stamp):  # timestamp 유효범위 검증
                 if check_did(std_did, time_stamp, hashed_data):  # qr 정보 검증
                     command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
                                container_id, wallet_name, wallet_key, admin_did, std_did, building_num, year, month, day]
