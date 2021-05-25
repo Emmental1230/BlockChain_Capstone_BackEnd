@@ -116,7 +116,6 @@ def member_list(request):
 
     # 회원가입  요청 +  did 발급
     if request.method == 'POST':
-        check_tempkey(request, hashlib.sha256(temp_key.encode()))
         email = request.GET.get('email', None)
         student_db = Member.objects.all()
 
@@ -439,26 +438,33 @@ def entry_list(request):
     if request.method == 'GET':
         if not 'entry_did' in request.GET:
             return JsonResponse({'msg': 'parmas error'}, status=400)
+        if not 'key' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
 
-        entry_did = request.GET.get('entry_did', None)
-        entry_db = Entry.objects.filter(entry_did=entry_did)
+        api_key = request.GET.get('key', None)  # key 추출
 
-        if len(entry_db) == 0:
-            return JsonResponse({'msg': 'has no entry'}, status=400)
+        if check_db(api_key):
+            entry_did = request.GET.get('entry_did', None)
+            entry_db = Entry.objects.filter(entry_did=entry_did)
 
-        json_data = {}
-        json_data['entry'] = []
+            if len(entry_db) == 0:
+                return JsonResponse({'msg': 'has no entry'}, status=400)
 
-        for i in range(0, len(entry_db), 1):
-            entry_data = {}
-            entry_data['entry_date'] = entry_db[i].entry_date
-            entry_data['building_num'] = entry_db[i].building_num
-            entry_data['entry_did'] = entry_db[i].entry_did
-            entry_data['entry_time'] = entry_db[i].entry_time
+            json_data = {}
+            json_data['entry'] = []
 
-            json_data['entry'].append(entry_data)
+            for i in range(0, len(entry_db), 1):
+                entry_data = {}
+                entry_data['entry_date'] = entry_db[i].entry_date
+                entry_data['building_num'] = entry_db[i].building_num
+                entry_data['entry_did'] = entry_db[i].entry_did
+                entry_data['entry_time'] = entry_db[i].entry_time
 
-        return JsonResponse(json_data, status=201)
+                json_data['entry'].append(entry_data)
+
+            return JsonResponse(json_data, status=201)
+        else:
+            return JsonResponse({'msg': 'Key is error'}, status=400)
 
 
 # 관리자 기준 출입 기록 GET(강의동 별)
