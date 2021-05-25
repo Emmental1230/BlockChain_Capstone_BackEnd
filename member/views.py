@@ -91,7 +91,7 @@ def member_list(request):
     # 키 발급
     if request.method == 'GET':
         student_db = Member.objects.all()
-        std_num = request.GET.get('std_num' , None)
+        std_num = request.GET.get('std_num', None)
         major = request.GET.get('major', None)
         name = request.GET.get('name', None)
         email = request.GET.get('email', None)
@@ -145,9 +145,11 @@ def member_list(request):
                 json_data = json.load(f)  # json_data에 json으로 저장
                 error = json_data['error']
                 if error == 'Error':
-                    os.remove('/home/deploy/' + wallet_name + '_gen_did.json')  # 생성된 파일 삭제
+                    os.remove('/home/deploy/' + wallet_name +
+                              '_gen_did.json')  # 생성된 파일 삭제
                     return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
-                os.remove('/home/deploy/' + wallet_name + '_gen_did.json')  # 생성된 파일 삭제
+                os.remove('/home/deploy/' + wallet_name +
+                          '_gen_did.json')  # 생성된 파일 삭제
                 did = json_data['did']  # Did 저장
                 cmp1 = str(did) + str(wallet_key)
                 did_time_hash = hashlib.sha256(
@@ -246,7 +248,8 @@ def regenerate_did(request):
                     json_data = json.load(f)  # json_data에 json으로 저장
                     # 에러 추가
                     if json_data['error'] == 'Error':
-                        os.remove('/home/deploy/' + str(std_num) + 'NewWalletID.json')  # 생성된 파일 삭제
+                        os.remove('/home/deploy/' + str(std_num) +
+                                  'NewWalletID.json')  # 생성된 파일 삭제
                         return JsonResponse({'msg': 'DID 재발급 오류'}, status=400)
                     new_wallet_name = json_data['new_wallet']
                     student.wallet_id = new_wallet_name  # 새로운 wallet_name 저장
@@ -254,7 +257,8 @@ def regenerate_did(request):
                     student.did_time_hash = hashlib.sha256(
                         cmp1.encode('utf-8')).hexdigest()
                     student.save()
-                    os.remove('/home/deploy/' + str(std_num) + 'NewWalletID.json')  # 생성된 파일 삭제
+                    os.remove('/home/deploy/' + str(std_num) +
+                              'NewWalletID.json')  # 생성된 파일 삭제
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
@@ -262,6 +266,8 @@ def regenerate_did(request):
         return JsonResponse({'did': student.did, 'new_wallet_name': new_wallet_name, 'old_wallet_name': old_wallet_name}, status=201)
 
 # DID 찾기
+
+
 @csrf_exempt
 def get_did(request):
     if request.method == 'GET':
@@ -279,11 +285,14 @@ def get_did(request):
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
                 process.wait()  # did 발급까지 대기
-                with open('/home/deploy/' + wallet_name + '_student_did.json')as f:  # server로 복사된 did 열기(학생이름으로 필요)
+                # server로 복사된 did 열기(학생이름으로 필요)
+                with open('/home/deploy/' + wallet_name + '_student_did.json')as f:
                     json_data = json.load(f)  # json_data에 json으로 저장
-                    os.remove('/home/deploy/' + wallet_name + '_student_did.json')  # 생성된 파일 삭제
+                    os.remove('/home/deploy/' + wallet_name +
+                              '_student_did.json')  # 생성된 파일 삭제
                     if json_data['error'] == 'Error':
-                        os.remove('/home/deploy/' + wallet_name + '_student_did.json')  # 생성된 파일 삭제
+                        os.remove('/home/deploy/' + wallet_name +
+                                  '_student_did.json')  # 생성된 파일 삭제
                         return JsonResponse({'msg': 'DID를 찾을 수 없습니다.'}, status=400)
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
@@ -341,7 +350,8 @@ def get_entry(request):
 
                 with open('/home/deploy/' + did + '_attrib.json')as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
-                    os.remove('/home/deploy/' + did + '_attrib.json')  # 생성된 파일 삭제
+                    os.remove('/home/deploy/' + did +
+                              '_attrib.json')  # 생성된 파일 삭제
                     if json_data['error'] == 'Error':
                         return JsonResponse({'msg': '출입한 내역이 없습니다.'}, status=400)
             except Exception as e:
@@ -383,11 +393,14 @@ def generate_entry(request):
                         process = Popen(command, stdout=PIPE, stderr=PIPE)
                         process.wait()  # did 발급까지 대기
 
-                        with open('/home/deploy/' + wallet_name + '_gen_attrib.json')as f:  # server로 복사된 did 열기
+                        # server로 복사된 did 열기
+                        with open('/home/deploy/' + wallet_name + '_gen_attrib.json')as f:
                             json_data = json.load(f)  # json_data에 json으로 저장
-                            os.remove('/home/deploy/' + wallet_name + '_gen_attrib.json')  # 생성된 파일 삭제
+                            os.remove('/home/deploy/' + wallet_name +
+                                      '_gen_attrib.json')  # 생성된 파일 삭제
                             if json_data['error'] == 'Error':
-                                os.remove('/home/deploy/' + wallet_name + '_gen_attrib.json')  # 생성된 파일 삭제
+                                os.remove('/home/deploy/' + wallet_name +
+                                          '_gen_attrib.json')  # 생성된 파일 삭제
                                 return JsonResponse({'msg': 'error'}, status=400)
 
                             entry_date = json_data['entry_date']
@@ -411,7 +424,8 @@ def generate_entry(request):
                     except Exception as e:
                         return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
                 else:
-                    temp_admindid = str(student.did_time_hash) + str(time_stamp)
+                    temp_admindid = str(
+                        student.did_time_hash) + str(time_stamp)
                     return JsonResponse({'msg': 'check_DID error', 'studentDidhash': hashed_data, 'adminDidhash': hashlib.sha256(temp_admindid.encode('utf-8')).hexdigest()}, status=400)
             else:
                 return JsonResponse({'msg': 'timestamp error'}, status=400)
