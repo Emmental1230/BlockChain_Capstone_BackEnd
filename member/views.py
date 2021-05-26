@@ -4,10 +4,8 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from .models import Member
 from .models import Entry
-from .models import Kguinfo
 from .serializers import MemberSerializer
 from .serializers import EntrySerializer
-from .serializers import KguinfoSerializer
 from subprocess import Popen, PIPE, STDOUT
 import subprocess
 import hashlib
@@ -25,7 +23,7 @@ container_id = "a3a5e0ee8b91"  # container_id 선언
 temp_key = "이팔청춘의 U-PASS"  # tmpkey 선언
 admin_key = "이팔청춘의 관리자"  # adminkey 선언
 master_did = "HHy8vS8zkfbQXwuAZQmBoV"
-container_id_list = ['4d2c5ca4e19e', 'fbb87668b808', '227a7df0fd95', 'eeed7d61b14f', '4b949a1e4c5b', '8c0631402c81']
+container_id_list = [None, '4d2c5ca4e19e', 'fbb87668b808', '227a7df0fd95', 'eeed7d61b14f', '4b949a1e4c5b', '8c0631402c81']
 
 
 # 관리자 임시키 검증
@@ -36,8 +34,7 @@ def check_adminkey(request):
             return JsonResponse({'msg': 'parmas error'}, status=400)
 
         ad_key = request.GET.get('key', None)     # params로 전달 받은 관리자 임시 키
-        compare_key = hashlib.sha256(
-            admin_key.encode()).hexdigest()  # 올바른 관리자 임시 키
+        compare_key = hashlib.sha256(admin_key.encode()).hexdigest()  # 올바른 관리자 임시 키
 
         if ad_key == compare_key:
             return JsonResponse({'msg': 'Admin key success'}, status=201)
@@ -46,8 +43,6 @@ def check_adminkey(request):
 
 
 # Key가 DB에 존재하는지 확인
-
-
 def check_db(api_key):
     student_db = Member.objects.all()
     if student_db.filter(user_key=api_key).exists():
@@ -55,9 +50,8 @@ def check_db(api_key):
     else:
         return False
 
+
 # DID 검증
-
-
 def check_did(did, time_stamp, hashed_data):
     # hashedData : qr에 담겨진 H(H(did + 간편비번))
 
@@ -70,9 +64,8 @@ def check_did(did, time_stamp, hashed_data):
     else:
         return False
 
+
 # TimeStamp 검증( 오차허용범위  ±15sec )
-
-
 def check_timestamp(qr):
     api_timestamp = time.time()
     api = int(api_timestamp)
@@ -84,15 +77,13 @@ def check_timestamp(qr):
 
 # container_id 체크
 def check_container_id():
-    # container_num = 1
-    # for i in range(1, len(container_id_list), 1):
-    #     member_db_con_count = Member.objects.filter(container_id=container_id_list[i]).count() # 
-    #     if member_db_con_count == 10:  # 해당 container id로 가입된 회원이 10명이라면,
-    #         container_num = container_num + 1   # 다음 container id 인덱스 번호 지정
-    #         continue
-    #     else:
-    #         return container_num
-    return 0
+     container_num = 1
+     for i in range(1, len(container_id_list), 1):
+         member_db_con_count = Member.objects.filter(container_id=container_id_list[i]).count() # 
+         if member_db_con_count == 10:  # 해당 container id로 가입된 회원이 10명이라면,
+             container_num = container_num + 1   # 다음 container id 인덱스 번호 지정
+
+     return container_num
 
 
 
@@ -136,7 +127,7 @@ def member_list(request):
 
         container_num = check_container_id() # container_id_list 인덱스 번호 추출
         command = ["sh", "../indy/start_docker/sh_check_attrib.sh",
-                   '4d2c5ca4e19e', master_did, info_hash, std_num]  # did발급 명령어
+                   container_id_list[container_num], master_did, info_hash, std_num]  # did발급 명령어
         try:
             # 명령어 인자로 하여 Popen 실행
             process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -160,6 +151,7 @@ def member_list(request):
                 return JsonResponse(user_key_json, status=201)   # user_key 값 반환
         except Exception as e:
             return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+            
         # kgu_db = Kguinfo.objects.all()
         # if kgu_db.filter(info_hash=info_hash).exists():   # Kguinfo DB에 info_hash값이 존재한다면,
         #     # user_key 해시 하는 부분
@@ -183,13 +175,10 @@ def member_list(request):
         user_key = request.GET.get('key', None)  # key 추출
         std_num = request.GET.get('std_num', None)
         major = request.GET.get('major', None)
-        info_dump = str(std_num) + str(major) + str(email)  # 학번+ 학과 + 이메일
-        info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
         time_stamp = int(time.time())  # 타임스탬프
 
         # wallet_name (이메일 + timestamp) 생성
-        wallet_name = hashlib.sha256(
-            (email + str(time_stamp)).encode()).hexdigest()
+        wallet_name = hashlib.sha256((email + str(time_stamp)).encode()).hexdigest()
         wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
 
         container_num = check_container_id() # container_id_list 인덱스 번호 추출
@@ -204,23 +193,18 @@ def member_list(request):
                 json_data = json.load(f)  # json_data에 json으로 저장
                 error = json_data['error']
                 if error == 'Error':
-                    os.remove('/home/deploy/' + wallet_name +
-                              '_gen_did.json')  # 생성된 파일 삭제
+                    os.remove('/home/deploy/' + wallet_name + '_gen_did.json')  # 생성된 파일 삭제
                     return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
-                os.remove('/home/deploy/' + wallet_name +
-                          '_gen_did.json')  # 생성된 파일 삭제
+                os.remove('/home/deploy/' + wallet_name + '_gen_did.json')  # 생성된 파일 삭제
                 did = json_data['did']  # Did 저장
                 cmp1 = str(did) + str(wallet_key)
-                did_time_hash = hashlib.sha256(
-                    cmp1.encode('utf-8')).hexdigest()
+                did_time_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
 
-                position = request.GET.get(
-                    'position', None)  # 관리자 인지 여부 추출
+                position = request.GET.get('position', None)  # 관리자 인지 여부 추출
                 if position == 'admin':    # 관리자 회원가입 이라면,
-                    data = {'email': '', 'info_hash': '', 'user_key': '',
-                            'wallet_id': '',  'did': '', 'did_time_hash': '', 'position': '', 'container_id': ''}
+                    data = {'email': '', 'user_key': '', 'wallet_id': '',  'did': '', 
+                            'did_time_hash': '', 'position': '', 'container_id': ''}
                     data['email'] = email
-                    data['info_hash'] = info_hash
                     data['user_key'] = user_key
                     data['wallet_id'] = wallet_name
                     data['did'] = did
@@ -229,10 +213,9 @@ def member_list(request):
                     data['container_id'] = container_id_list[container_num]
 
                 else:                     # 일반 사용자 회원 가입이라면
-                    data = {'email': '', 'info_hash': '', 'user_key': '',
-                            'wallet_id': '',  'did': '', 'did_time_hash': '', 'container_id':''}
+                    data = {'email': '', 'user_key': '', 'wallet_id': '',  
+                            'did': '', 'did_time_hash': '', 'container_id':''}
                     data['email'] = email
-                    data['info_hash'] = info_hash
                     data['user_key'] = user_key
                     data['wallet_id'] = wallet_name
                     data['did'] = did
@@ -303,8 +286,7 @@ def regenerate_did(request):
             email = student.email  # 이메일
             time_stamp = int(time.time())  # 타임스탬프
             # wallet_name (이메일 + timestamp) 생성
-            new_wallet_name = hashlib.sha256(
-                (email + str(time_stamp)).encode()).hexdigest()
+            new_wallet_name = hashlib.sha256((email + str(time_stamp)).encode()).hexdigest()
             wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
             std_num = request.GET.get('std_num', None)  # 학번 params 가져오기
 
@@ -322,14 +304,12 @@ def regenerate_did(request):
                     json_data = json.load(f)  # json_data에 json으로 저장
                     # 에러 추가
                     if json_data['error'] == 'Error':
-                        os.remove('/home/deploy/' + str(std_num) +
-                                  'NewWalletID.json')  # 생성된 파일 삭제
+                        os.remove('/home/deploy/' + str(std_num) + 'NewWalletID.json')  # 생성된 파일 삭제
                         return JsonResponse({'msg': 'DID 재발급 오류'}, status=400)
                     new_wallet_name = json_data['new_wallet']
                     student.wallet_id = new_wallet_name  # 새로운 wallet_name 저장
                     cmp1 = str(student.did) + str(wallet_key)
-                    student.did_time_hash = hashlib.sha256(
-                        cmp1.encode('utf-8')).hexdigest()
+                    student.did_time_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
                     student.save()
                     os.remove('/home/deploy/' + str(std_num) +
                               'NewWalletID.json')  # 생성된 파일 삭제
@@ -362,11 +342,9 @@ def get_did(request):
                 # server로 복사된 did 열기(학생이름으로 필요)
                 with open('/home/deploy/' + wallet_name + '_student_did.json')as f:
                     json_data = json.load(f)  # json_data에 json으로 저장
-                    os.remove('/home/deploy/' + wallet_name +
-                              '_student_did.json')  # 생성된 파일 삭제
+                    os.remove('/home/deploy/' + wallet_name + '_student_did.json')  # 생성된 파일 삭제
                     if json_data['error'] == 'Error':
-                        os.remove('/home/deploy/' + wallet_name +
-                                  '_student_did.json')  # 생성된 파일 삭제
+                        os.remove('/home/deploy/' + wallet_name + '_student_did.json')  # 생성된 파일 삭제
                         return JsonResponse({'msg': 'DID를 찾을 수 없습니다.'}, status=400)
             except Exception as e:
                 return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
@@ -385,28 +363,52 @@ def findmyinfo(request):
         api_key = request.GET.get('key', None)   # key 파라미터 추출
         if api_key != hashlib.sha256(temp_key.encode()).hexdigest(): # key 파라미터가 올바르지 않으면,
             return JsonResponse({'msg': 'key params error'}, status=400)
-
+        
+        student_db = Member.objects.all()
         std_num = request.GET.get('std_num', None)
         major = request.GET.get('major', None)
         email = request.GET.get('email', None)
 
-        info_dump = str(std_num) + str(major) + str(email)  # 전달 받은 학번,전공,이메일 concat
-        info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()  # 해쉬
-        student_db = Member.objects.all()
-
-        # email 정보가 DB에 있는지 확인
-        if student_db.filter(email=email).exists():
-            # 제대로된 정보 입력했는지 확인
-            if student_db.filter(info_hash=info_hash).exists():
-                std = Member.objects.get(info_hash=info_hash)  # 해당 학생 정보 저장
-                if std.position == 'admin':   # 만약 해당 멤버가 관리자라면,
-                    return JsonResponse({'admin_key': hashlib.sha256(admin_key.encode()).hexdigest(),
-                                         'user_key': std.user_key}, status=201)    # user_key와 admin_key값 반환
-                return JsonResponse({'user_key': std.user_key}, status=201)
-            else:
-                return JsonResponse({'msg': '잘못된 정보를 입력하였습니다.'}, status=400)
+        if student_db.filter(email=email).exists():  # params로 전달받은 이메일이 DB에 존재하는지 확인
+            info_dump = str(std_num) + str(major) + str(email)  # 전달 받은 학번,전공,이메일 concat
+            info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()  # 해쉬
+            container_num = check_container_id() # container_id_list 인덱스 번호 추출
+            command = ["sh", "../indy/start_docker/sh_check_attrib.sh",
+                   container_id_list[container_num], master_did, info_hash, std_num]  # did발급 명령어
+            try:
+                # 명령어 인자로 하여 Popen 실행
+                process = Popen(command, stdout=PIPE, stderr=PIPE)
+                process.wait()  
+                with open('../../deploy/' + std_num + '_check_attrib.json')as f:  
+                    json_data = json.load(f)  
+                    error = json_data['error']
+                    if error == 'Error':
+                        os.remove('/home/deploy/' + std_num + '_check_attrib.json')  # 생성된 파일 삭제
+                        return JsonResponse({'msg': 'user info is not exists in blockchain'}, status=400)
+                    os.remove('/home/deploy/' + std_num + '_check_attrib.json')  # 생성된 파일 삭제
+                    std = student_db.get(info_hash=info_hash)
+                    if std.position == 'admin':   # 만약 해당 멤버가 관리자라면,
+                        return JsonResponse({'admin_key': hashlib.sha256(admin_key.encode()).hexdigest(),'user_key': std.user_key}, status=201)    # user_key와 admin_key값 반환
+                    else:
+                        return JsonResponse({'user_key': std.user_key}, status=201)
+            except Exception as e:
+                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
         else:
             return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
+        
+        # # email 정보가 DB에 있는지 확인
+        # if student_db.filter(email=email).exists():
+        #     # 제대로된 정보 입력했는지 확인
+        #     if student_db.filter(info_hash=info_hash).exists():
+        #         std = Member.objects.get(info_hash=info_hash)  # 해당 학생 정보 저장
+        #         if std.position == 'admin':   # 만약 해당 멤버가 관리자라면,
+        #             return JsonResponse({'admin_key': hashlib.sha256(admin_key.encode()).hexdigest(),
+        #                                  'user_key': std.user_key}, status=201)    # user_key와 admin_key값 반환
+        #         return JsonResponse({'user_key': std.user_key}, status=201)
+        #     else:
+        #         return JsonResponse({'msg': '잘못된 정보를 입력하였습니다.'}, status=400)
+        # else:
+        #     return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
 
 
 # 출입 여부 찾기(Block Chain 상의 tx)
@@ -432,8 +434,7 @@ def get_entry(request):
 
                 with open('/home/deploy/' + did + '_attrib.json')as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
-                    os.remove('/home/deploy/' + did +
-                              '_attrib.json')  # 생성된 파일 삭제
+                    os.remove('/home/deploy/' + did + '_attrib.json')  # 생성된 파일 삭제
                     if json_data['error'] == 'Error':
                         return JsonResponse({'msg': '출입한 내역이 없습니다.'}, status=400)
             except Exception as e:
@@ -471,7 +472,7 @@ def generate_entry(request):
                 if check_did(std_did, time_stamp, hashed_data):  # qr 정보 검증
                     container_num = check_container_id()  # container_id_list index번호 추출
                     command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
-                               '4d2c5ca4e19e', wallet_name, wallet_key, 
+                               container_id_list[container_num], wallet_name, wallet_key, 
                                admin_did, std_did, building_num, year, month, day]
                     try:
                         # 명령어 인자로 하여 Popen 실행
@@ -481,11 +482,9 @@ def generate_entry(request):
                         # server로 복사된 did 열기
                         with open('/home/deploy/' + wallet_name + '_gen_attrib.json')as f:
                             json_data = json.load(f)  # json_data에 json으로 저장
-                            os.remove('/home/deploy/' + wallet_name +
-                                      '_gen_attrib.json')  # 생성된 파일 삭제
+                            os.remove('/home/deploy/' + wallet_name + '_gen_attrib.json')  # 생성된 파일 삭제
                             if json_data['error'] == 'Error':
-                                os.remove('/home/deploy/' + wallet_name +
-                                          '_gen_attrib.json')  # 생성된 파일 삭제
+                                os.remove('/home/deploy/' + wallet_name + '_gen_attrib.json')  # 생성된 파일 삭제
                                 return JsonResponse({'msg': 'error'}, status=400)
 
                             entry_date = json_data['entry_date']
@@ -494,8 +493,7 @@ def generate_entry(request):
                             entry_time = json_data['entry_time']
 
                             # 출입 정보 JSON 형태로 저장
-                            data = {'entry_date': '', 'building_num': '',
-                                    'entry_did': '', 'entry_time': ''}
+                            data = {'entry_date': '', 'building_num': '', 'entry_did': '', 'entry_time': ''}
                             data['entry_date'] = entry_date
                             data['building_num'] = building_num
                             data['entry_did'] = entry_did
@@ -571,8 +569,7 @@ def entry_admin(request):
         admin_did = request.GET.get('admin_did', None)
         student_db = Member.objects.all()  # Member 테이블에 저장된 모든 튜플 추출
         if student_db.filter(did=admin_did).exists():  # 전달받은 admin_did가 존재한다면,
-            member_db = Member.objects.filter(
-                did=admin_did)  # 전달 받은 did에 해당하는 튜플 추출
+            member_db = Member.objects.filter(did=admin_did)  # 전달 받은 did에 해당하는 튜플 추출
             position = member_db[0].position    # 해당 튜플의 position 추출
         else:
             return JsonResponse({'msg': 'did not exists'}, status=400)
@@ -583,11 +580,9 @@ def entry_admin(request):
 
             # 정렬 방식에 따라 DB 튜플 불러오기
             if order_by == 'Asc':  # 오름차순 이라면,
-                entry_db = Entry.objects.filter(
-                    building_num=building_num).order_by('id')
+                entry_db = Entry.objects.filter(building_num=building_num).order_by('id')
             elif order_by == 'Desc':  # 내림차순 이라면,
-                entry_db = Entry.objects.filter(
-                    building_num=building_num).order_by('-id')
+                entry_db = Entry.objects.filter(building_num=building_num).order_by('-id')
             else:
                 return JsonResponse({'msg': 'order param error'}, status=400)
 
@@ -602,8 +597,7 @@ def entry_admin(request):
             posts_entry = paginator.get_page(page_num)  # 페이지 번호에 해당하는 정보 추출
 
             # JSON 형태로 만들고, Response
-            json_data = {'entry': '', 'total_page': '',
-                         'total_count': total_count}
+            json_data = {'entry': '', 'total_page': '', 'total_count': total_count}
             json_data['entry'] = []
             json_data['total_page'] = total_page
             json_data['total_count'] = total_count
