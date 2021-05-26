@@ -23,7 +23,8 @@ from asgiref.sync import sync_to_async
 
 container_id = "a3a5e0ee8b91"  # container_id 선언
 temp_key = "이팔청춘의 U-PASS"  # tmpkey 선언
-admin_key = "이팔청춘의 관리자" # adminkey 선언
+admin_key = "이팔청춘의 관리자"  # adminkey 선언
+
 
 @csrf_exempt
 # 사용자 임시키 검증
@@ -45,13 +46,13 @@ def check_adminkey(request):
             return JsonResponse({'msg': 'parmas error'}, status=400)
 
         ad_key = request.GET.get('key', None)     # params로 전달 받은 관리자 임시 키
-        compare_key = hashlib.sha256(admin_key.encode()).hexdigest()  # 올바른 관리자 임시 키
+        compare_key = hashlib.sha256(
+            admin_key.encode()).hexdigest()  # 올바른 관리자 임시 키
 
         if ad_key == compare_key:
             return JsonResponse({'msg': 'Admin key success'}, status=201)
         elif ad_key != compare_key:
             return JsonResponse({'msg': 'Key is error'}, status=400)
-
 
 
 # Key가 DB에 존재하는지 확인
@@ -147,69 +148,63 @@ def member_list(request):
         major = request.GET.get('major', None)
         info_dump = str(std_num) + str(major) + str(email)  # 학번+ 학과 + 이메일
         info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
-        
-        kgu_db = Kguinfo.objects.all()
-        if kgu_db.filter(info_hash=info_hash).exists():    # 전달 받은 정보의 해쉬가 학교 DB에 존재한다면,
-            time_stamp = int(time.time())  # 타임스탬프
-            # wallet_name (이메일 + timestamp) 생성
-            wallet_name = hashlib.sha256(
-                (email + str(time_stamp)).encode()).hexdigest()
-            wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
-            command = ["sh", "../indy/start_docker/sh_generate_did.sh",
-                       container_id, wallet_name, wallet_key, std_num]  # did발급 명령어
-            try:
-                # 명령어 인자로 하여 Popen 실행
-                process = Popen(command, stdout=PIPE, stderr=PIPE)
-                process.wait()  # did 재발급까지 대기
-                with open('../../deploy/' + wallet_name + '_gen_did.json')as f:  # server로 복사된 did 열기
-                    json_data = json.load(f)  # json_data에 json으로 저장
-                    error = json_data['error']
-                    if error == 'Error':
-                        os.remove('/home/deploy/' + wallet_name +
-                                  '_gen_did.json')  # 생성된 파일 삭제
-                        return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
+
+        time_stamp = int(time.time())  # 타임스탬프
+        # wallet_name (이메일 + timestamp) 생성
+        wallet_name = hashlib.sha256(
+            (email + str(time_stamp)).encode()).hexdigest()
+        wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
+        command = ["sh", "../indy/start_docker/sh_generate_did.sh",
+                   container_id, wallet_name, wallet_key, std_num]  # did발급 명령어
+        try:
+            # 명령어 인자로 하여 Popen 실행
+            process = Popen(command, stdout=PIPE, stderr=PIPE)
+            process.wait()  # did 재발급까지 대기
+            with open('../../deploy/' + wallet_name + '_gen_did.json')as f:  # server로 복사된 did 열기
+                json_data = json.load(f)  # json_data에 json으로 저장
+                error = json_data['error']
+                if error == 'Error':
                     os.remove('/home/deploy/' + wallet_name +
                               '_gen_did.json')  # 생성된 파일 삭제
-                    did = json_data['did']  # Did 저장
-                    cmp1 = str(did) + str(wallet_key)
-                    did_time_hash = hashlib.sha256(
-                        cmp1.encode('utf-8')).hexdigest()
+                    return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
+                os.remove('/home/deploy/' + wallet_name +
+                          '_gen_did.json')  # 생성된 파일 삭제
+                did = json_data['did']  # Did 저장
+                cmp1 = str(did) + str(wallet_key)
+                did_time_hash = hashlib.sha256(
+                    cmp1.encode('utf-8')).hexdigest()
 
+                position = request.GET.get(
+                    'position', None)  # 관리자 인지 여부 추출
+                if position == 'admin':    # 관리자 회원가입 이라면,
+                    data = {'email': '', 'info_hash': '', 'user_key': '',
+                            'wallet_id': '',  'did': '', 'did_time_hash': '', 'position': ''}
+                    data['email'] = email
+                    data['info_hash'] = info_hash
+                    data['user_key'] = user_key
+                    data['wallet_id'] = wallet_name
+                    data['did'] = did
+                    data['did_time_hash'] = did_time_hash
+                    data['position'] = position
 
-                    position = request.GET.get('position', None) # 관리자 인지 여부 추출
-                    if position == 'admin':    # 관리자 회원가입 이라면,
-                        data = {'email': '', 'info_hash': '', 'user_key': '',
-                                'wallet_id': '',  'did': '', 'did_time_hash': '', 'position': ''}
-                        data['email'] = email
-                        data['info_hash'] = info_hash
-                        data['user_key'] = user_key
-                        data['wallet_id'] = wallet_name
-                        data['did'] = did
-                        data['did_time_hash'] = did_time_hash
-                        data['position'] = position
+                else:                     # 일반 사용자 회원 가입이라면
+                    data = {'email': '', 'info_hash': '', 'user_key': '',
+                            'wallet_id': '',  'did': '', 'did_time_hash': ''}
+                    data['email'] = email
+                    data['info_hash'] = info_hash
+                    data['user_key'] = user_key
+                    data['wallet_id'] = wallet_name
+                    data['did'] = did
+                    data['did_time_hash'] = did_time_hash
 
-                    else:                     # 일반 사용자 회원 가입이라면
-                        data = {'email': '', 'info_hash': '', 'user_key': '',
-                                'wallet_id': '',  'did': '', 'did_time_hash': ''}
-                        data['email'] = email
-                        data['info_hash'] = info_hash
-                        data['user_key'] = user_key
-                        data['wallet_id'] = wallet_name
-                        data['did'] = did
-                        data['did_time_hash'] = did_time_hash
+                serializer = MemberSerializer(data=data)
 
-                    serializer = MemberSerializer(data=data)
+                if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
+                    serializer.save()
+                    return JsonResponse({'did': did, 'error': error}, status=201)
 
-                    if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
-                        serializer.save()
-                        return JsonResponse({'did': did, 'error': error}, status=201)
-
-            except Exception as e:
-                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
-
-        else:
-            return JsonResponse({'msg': 'kgu DB info is not exists'}, status=400)
-
+        except Exception as e:
+            return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
 
 
 # 간편 비밀번호 저장(POST) 및 찾기(GET)
@@ -348,7 +343,8 @@ def findmyinfo(request):
         major = request.GET.get('major', None)
         email = request.GET.get('email', None)
 
-        info_dump = str(std_num) + str(major) + str(email)  # 전달 받은 학번,전공,이메일 concat
+        info_dump = str(std_num) + str(major) + \
+            str(email)  # 전달 받은 학번,전공,이메일 concat
         info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()  # 해쉬
         student_db = Member.objects.all()
 
@@ -358,8 +354,8 @@ def findmyinfo(request):
             if student_db.filter(info_hash=info_hash).exists():
                 std = Member.objects.get(info_hash=info_hash)  # 해당 학생 정보 저장
                 if std.position == 'admin':   # 만약 해당 멤버가 관리자라면,
-                    return JsonResponse({'admin_key' : hashlib.sha256(admin_key.encode()).hexdigest(),
-                                'user_key': std.user_key}, status=201)    # user_key와 admin_key값 반환
+                    return JsonResponse({'admin_key': hashlib.sha256(admin_key.encode()).hexdigest(),
+                                         'user_key': std.user_key}, status=201)    # user_key와 admin_key값 반환
                 return JsonResponse({'user_key': std.user_key}, status=201)
             else:
                 return JsonResponse({'msg': '잘못된 정보를 입력하였습니다.'}, status=400)
@@ -410,7 +406,8 @@ def generate_entry(request):
         api_key = request.GET.get('key', None)  # key 추출
 
         if check_db(api_key):
-            student = Member.objects.get(user_key=api_key) # 전달 받은 key에 해당하는 튜플 추출
+            student = Member.objects.get(
+                user_key=api_key)  # 전달 받은 key에 해당하는 튜플 추출
 
             wallet_name = student.wallet_id  # wallet_name 생성
             wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
@@ -484,11 +481,11 @@ def entry_list(request):
 
         api_key = request.GET.get('key', None)  # key 추출
 
-        if check_db(api_key): # 전달 받은 key가 DB에 존재 한다면,
+        if check_db(api_key):  # 전달 받은 key가 DB에 존재 한다면,
             entry_did = request.GET.get('entry_did', None)
             entry_db = Entry.objects.filter(entry_did=entry_did)
 
-            if len(entry_db) == 0: # 전달 받은 출입 did가 출입한 기록이 없다면,
+            if len(entry_db) == 0:  # 전달 받은 출입 did가 출입한 기록이 없다면,
                 return JsonResponse({'msg': 'has no entry'}, status=400)
 
             json_data = {}
@@ -525,7 +522,8 @@ def entry_admin(request):
         admin_did = request.GET.get('admin_did', None)
         student_db = Member.objects.all()  # Member 테이블에 저장된 모든 튜플 추출
         if student_db.filter(did=admin_did).exists():  # 전달받은 admin_did가 존재한다면,
-            member_db = Member.objects.filter(did=admin_did)  # 전달 받은 did에 해당하는 튜플 추출
+            member_db = Member.objects.filter(
+                did=admin_did)  # 전달 받은 did에 해당하는 튜플 추출
             position = member_db[0].position    # 해당 튜플의 position 추출
         else:
             return JsonResponse({'msg': 'did not exists'}, status=400)
@@ -535,7 +533,7 @@ def entry_admin(request):
             building_num = request.GET.get('building_num', None)  # 강의동 번호 GET
 
             # 정렬 방식에 따라 DB 튜플 불러오기
-            if order_by == 'Asc': # 오름차순 이라면,
+            if order_by == 'Asc':  # 오름차순 이라면,
                 entry_db = Entry.objects.filter(
                     building_num=building_num).order_by('id')
             elif order_by == 'Desc':  # 내림차순 이라면,
@@ -548,14 +546,15 @@ def entry_admin(request):
                 return JsonResponse({'msg': 'has no entry'}, status=400)
 
             # 페이지네이션 적용
-            page_num = request.GET.get('page_num', None) # 페이지 번호 추출
+            page_num = request.GET.get('page_num', None)  # 페이지 번호 추출
             paginator = Paginator(entry_db, 10)
             total_page = paginator.num_pages
             total_count = paginator.count
             posts_entry = paginator.get_page(page_num)  # 페이지 번호에 해당하는 정보 추출
 
             # JSON 형태로 만들고, Response
-            json_data = {'entry': '', 'total_page': '', 'total_count': total_count}
+            json_data = {'entry': '', 'total_page': '',
+                         'total_count': total_count}
             json_data['entry'] = []
             json_data['total_page'] = total_page
             json_data['total_count'] = total_count
