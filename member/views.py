@@ -24,7 +24,8 @@ from asgiref.sync import sync_to_async
 container_id = "a3a5e0ee8b91"  # container_id 선언
 temp_key = "이팔청춘의 U-PASS"  # tmpkey 선언
 admin_key = "이팔청춘의 관리자"  # adminkey 선언
-
+master_did = "HHy8vS8zkfbQXwuAZQmBoV"
+container_id_list = ['4d2c5ca4e19e', 'fbb87668b808', '227a7df0fd95', 'eeed7d61b14f', '4b949a1e4c5b', '8c0631402c81']
 
 
 # 관리자 임시키 검증
@@ -80,9 +81,23 @@ def check_timestamp(qr):
     else:
         return False
 
+
+# container_id 체크
+def check_container_id():
+    # container_num = 1
+    # for i in range(1, len(container_id_list), 1):
+    #     member_db_con_count = Member.objects.filter(container_id=container_id_list[i]).count() # 
+    #     if member_db_con_count == 10:  # 해당 container id로 가입된 회원이 10명이라면,
+    #         container_num = container_num + 1   # 다음 container id 인덱스 번호 지정
+    #         continue
+    #     else:
+    #         return container_num
+    return 0
+
+
+
+
 # 올바른 키인지 체크
-
-
 @csrf_exempt
 def auth_key(request):
     if request.method == 'GET':
@@ -93,9 +108,8 @@ def auth_key(request):
         else:
             return JsonResponse({'msg': 'Invalid key'}, status=400)
 
+
 # 회원 키 GET 및 회원 가입 POST
-
-
 @csrf_exempt
 def member_list(request):
     # 키 발급
@@ -115,34 +129,56 @@ def member_list(request):
 
         if student_db.filter(email=email).exists():  # params로 전달받은 이메일이 DB에 존재하는지 확인
             return JsonResponse({'msg': 'Email is already exists'}, status=400)
-
+       
         # info_dump에 전달 받은 정보 concat
         info_dump = str(std_num) + str(major) + str(email)
         info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
 
-        kgu_db = Kguinfo.objects.all()
-        if kgu_db.filter(info_hash=info_hash).exists():   # Kguinfo DB에 info_hash값이 존재한다면,
-            # user_key 해시 하는 부분
-            salt = base62.encodebytes(os.urandom(16))
-            salt = bytes(salt, encoding="utf-8")
+        container_num = check_container_id() # container_id_list 인덱스 번호 추출
+        command = ["sh", "../indy/start_docker/sh_check_attrib.sh",
+                   '4d2c5ca4e19e', master_did, info_hash, std_num]  # did발급 명령어
+        try:
+            # 명령어 인자로 하여 Popen 실행
+            process = Popen(command, stdout=PIPE, stderr=PIPE)
+            process.wait()  
+            with open('../../deploy/' + std_num + '_check_attrib.json')as f:  
+                json_data = json.load(f)  
+                error = json_data['error']
+                if error == 'Error':
+                    os.remove('/home/deploy/' + std_num + '_check_attrib.json')  # 생성된 파일 삭제
+                    return JsonResponse({'msg': 'user info is not exists in blockchain'}, status=400)
+                os.remove('/home/deploy/' + std_num + '_check_attrib.json')  # 생성된 파일 삭제
+                # user_key 해시 하는 부분
+                salt = base62.encodebytes(os.urandom(16))
+                salt = bytes(salt, encoding="utf-8")
 
-            email_dump = info_dump + str(name) + str(salt)
-            user_key = hashlib.sha256(email_dump.encode('utf-8')).hexdigest()  # user_key 해쉬
-            user_key_json = {'user_key': ''}
-            user_key_json['user_key'] = user_key
+                email_dump = info_dump + str(name) + str(salt)
+                user_key = hashlib.sha256(email_dump.encode('utf-8')).hexdigest()  # user_key 해쉬
+                user_key_json = {'user_key': ''}
+                user_key_json['user_key'] = user_key
 
-            return JsonResponse(user_key_json, status=201)   # user_key 값 반환
-        else:
-            return JsonResponse({'msg': 'Kgu DB info is not exists'}, status=400)
+                return JsonResponse(user_key_json, status=201)   # user_key 값 반환
+        except Exception as e:
+            return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+        # kgu_db = Kguinfo.objects.all()
+        # if kgu_db.filter(info_hash=info_hash).exists():   # Kguinfo DB에 info_hash값이 존재한다면,
+        #     # user_key 해시 하는 부분
+        #     salt = base62.encodebytes(os.urandom(16))
+        #     salt = bytes(salt, encoding="utf-8")
+
+        #     email_dump = info_dump + str(name) + str(salt)
+        #     user_key = hashlib.sha256(email_dump.encode('utf-8')).hexdigest()  # user_key 해쉬
+        #     user_key_json = {'user_key': ''}
+        #     user_key_json['user_key'] = user_key
+
+        #     return JsonResponse(user_key_json, status=201)   # user_key 값 반환
+        # else:
+        #     return JsonResponse({'msg': 'Kgu DB info is not exists'}, status=400)
 
     # 회원가입  요청 +  did 발급
     if request.method == 'POST':
         email = request.GET.get('email', None)
         student_db = Member.objects.all()
-
-        # 중복 회원여부 확인
-        if student_db.filter(email=email).exists():
-            return JsonResponse({'msg': 'Email is already exists'}, status=400)
 
         user_key = request.GET.get('key', None)  # key 추출
         std_num = request.GET.get('std_num', None)
@@ -155,12 +191,15 @@ def member_list(request):
         wallet_name = hashlib.sha256(
             (email + str(time_stamp)).encode()).hexdigest()
         wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
+
+        container_num = check_container_id() # container_id_list 인덱스 번호 추출
         command = ["sh", "../indy/start_docker/sh_generate_did.sh",
-                   container_id, wallet_name, wallet_key, std_num]  # did발급 명령어
+                   container_id_list[container_num], wallet_name, wallet_key, std_num]  # did발급 명령어
         try:
             # 명령어 인자로 하여 Popen 실행
             process = Popen(command, stdout=PIPE, stderr=PIPE)
             process.wait()  # did 재발급까지 대기
+            
             with open('../../deploy/' + wallet_name + '_gen_did.json')as f:  # server로 복사된 did 열기
                 json_data = json.load(f)  # json_data에 json으로 저장
                 error = json_data['error']
@@ -179,7 +218,7 @@ def member_list(request):
                     'position', None)  # 관리자 인지 여부 추출
                 if position == 'admin':    # 관리자 회원가입 이라면,
                     data = {'email': '', 'info_hash': '', 'user_key': '',
-                            'wallet_id': '',  'did': '', 'did_time_hash': '', 'position': ''}
+                            'wallet_id': '',  'did': '', 'did_time_hash': '', 'position': '', 'container_id': ''}
                     data['email'] = email
                     data['info_hash'] = info_hash
                     data['user_key'] = user_key
@@ -187,16 +226,18 @@ def member_list(request):
                     data['did'] = did
                     data['did_time_hash'] = did_time_hash
                     data['position'] = position
+                    data['container_id'] = container_id_list[container_num]
 
                 else:                     # 일반 사용자 회원 가입이라면
                     data = {'email': '', 'info_hash': '', 'user_key': '',
-                            'wallet_id': '',  'did': '', 'did_time_hash': ''}
+                            'wallet_id': '',  'did': '', 'did_time_hash': '', 'container_id':''}
                     data['email'] = email
                     data['info_hash'] = info_hash
                     data['user_key'] = user_key
                     data['wallet_id'] = wallet_name
                     data['did'] = did
                     data['did_time_hash'] = did_time_hash
+                    data['container_id'] = container_id_list[container_num]
 
                 serializer = MemberSerializer(data=data)
 
@@ -247,8 +288,6 @@ def password(request):
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
 # DID 재발급
-
-
 @csrf_exempt
 def regenerate_did(request):
     if request.method == 'POST':
@@ -270,7 +309,8 @@ def regenerate_did(request):
             std_num = request.GET.get('std_num', None)  # 학번 params 가져오기
 
             # DB에 wallet_name 저장 필요
-            command = ["sh", "../indy/start_docker/sh_regenerate_did.sh", container_id,
+            container_num = check_container_id() # container_id_list 인덱스 번호 추출
+            command = ["sh", "../indy/start_docker/sh_regenerate_did.sh", container_id_list[container_num],
                        did, std_num, email, new_wallet_name, wallet_key]  # did 재발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
@@ -300,8 +340,6 @@ def regenerate_did(request):
         return JsonResponse({'did': student.did, 'new_wallet_name': new_wallet_name, 'old_wallet_name': old_wallet_name}, status=201)
 
 # DID 찾기
-
-
 @csrf_exempt
 def get_did(request):
     if request.method == 'GET':
@@ -313,8 +351,10 @@ def get_did(request):
             student = Member.objects.get(user_key=api_key)
             wallet_name = student.wallet_id  # wallet_name 디비에서 찾아오기
             wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
+
+            container_num = check_container_id() # container_id_list 인덱스 번호 추출
             command = ["sh", "../indy/start_docker/sh_get_did.sh",
-                       container_id, wallet_name, wallet_key]
+                       container_id_list[container_num], wallet_name, wallet_key]
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -382,8 +422,9 @@ def get_entry(request):
             year = request.GET.get('year', None)  # 연도
             month = request.GET.get('month', None)  # 월
 
+            container_num = check_container_id() # container_id_list 인덱스 번호 추출
             command = ["sh", "../indy/start_docker/sh_get_attrib.sh",
-                       container_id, did, year, month]
+                       container_id_list[container_num], did, year, month]
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -428,8 +469,10 @@ def generate_entry(request):
 
             if check_timestamp(time_stamp):  # timestamp 유효범위 검증
                 if check_did(std_did, time_stamp, hashed_data):  # qr 정보 검증
+                    container_num = check_container_id()  # container_id_list index번호 추출
                     command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
-                               container_id, wallet_name, wallet_key, admin_did, std_did, building_num, year, month, day]
+                               '4d2c5ca4e19e', wallet_name, wallet_key, 
+                               admin_did, std_did, building_num, year, month, day]
                     try:
                         # 명령어 인자로 하여 Popen 실행
                         process = Popen(command, stdout=PIPE, stderr=PIPE)
