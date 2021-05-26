@@ -4,8 +4,10 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from .models import Member
 from .models import Entry
+from .models import Kguinfo
 from .serializers import MemberSerializer
 from .serializers import EntrySerializer
+from .serializers import KguinfoSerializer
 from subprocess import Popen, PIPE, STDOUT
 import subprocess
 import hashlib
@@ -21,10 +23,10 @@ from asgiref.sync import sync_to_async
 
 container_id = "a3a5e0ee8b91"  # container_id 선언
 temp_key = "이팔청춘의 U-PASS"  # tmpkey 선언
-
+admin_key = "이팔청춘의 관리자" # adminkey 선언
 
 @csrf_exempt
-# 임시키 검증
+# 사용자 임시키 검증
 def check_tempkey(request, compare_key):
     if not 'key' in request.GET:
         return JsonResponse({'msg': 'parmas error'}, status=400)
@@ -33,6 +35,24 @@ def check_tempkey(request, compare_key):
 
     if api_key != compare_key:
         return JsonResponse({'msg': 'Key is error'}, status=400)
+
+
+# 관리자 임시키 검증
+@csrf_exempt
+def check_adminkey(request):
+    if request.method == 'GET':
+        if not 'key' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+
+        ad_key = request.GET.get('key', None)     # params로 전달 받은 관리자 임시 키
+        compare_key = hashlib.sha256(admin_key.encode()).hexdigest()  # 올바른 관리자 임시 키
+
+        if ad_key == compare_key:
+            return JsonResponse({'msg': 'Admin key success'}, status=201)
+        elif ad_key != compare_key:
+            return JsonResponse({'msg': 'Key is error'}, status=400)
+
+
 
 # Key가 DB에 존재하는지 확인
 
@@ -99,9 +119,8 @@ def member_list(request):
         if student_db.filter(email=email).exists():  # params로 전달받은 이메일이 DB에 존재하는지 확인
             return JsonResponse({'msg': 'Email is already exists'}, status=400)
 
-        # info_hash 해시 하는 부분
+        # info_dump에 전달 받은 정보 concat
         info_dump = str(std_num) + str(major) + str(name) + str(email)
-        info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
 
         # user_key 해시 하는 부분
         salt = base62.encodebytes(os.urandom(16))
@@ -126,51 +145,71 @@ def member_list(request):
         user_key = request.GET.get('key', None)  # key 추출
         std_num = request.GET.get('std_num', None)
         major = request.GET.get('major', None)
-        name = request.GET.get('name', None)
-        info_dump = str(std_num) + str(major) + str(name) + str(email)
+        info_dump = str(std_num) + str(major) + str(email)  # 학번+ 학과 + 이메일
         info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
-        time_stamp = int(time.time())  # 타임스탬프
-        # wallet_name (이메일 + timestamp) 생성
-        wallet_name = hashlib.sha256(
-            (email + str(time_stamp)).encode()).hexdigest()
-        wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
-        command = ["sh", "../indy/start_docker/sh_generate_did.sh",
-                   container_id, wallet_name, wallet_key, std_num]  # did발급 명령어
-        try:
-            # 명령어 인자로 하여 Popen 실행
-            process = Popen(command, stdout=PIPE, stderr=PIPE)
-            process.wait()  # did 재발급까지 대기
-            with open('../../deploy/' + wallet_name + '_gen_did.json')as f:  # server로 복사된 did 열기
-                json_data = json.load(f)  # json_data에 json으로 저장
-                error = json_data['error']
-                if error == 'Error':
+        
+        kgu_db = Kguinfo.objects.all()
+        if kgu_db.filter(info_hash=info_hash).exists():    # 전달 받은 정보의 해쉬가 학교 DB에 존재한다면,
+            time_stamp = int(time.time())  # 타임스탬프
+            # wallet_name (이메일 + timestamp) 생성
+            wallet_name = hashlib.sha256(
+                (email + str(time_stamp)).encode()).hexdigest()
+            wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
+            command = ["sh", "../indy/start_docker/sh_generate_did.sh",
+                       container_id, wallet_name, wallet_key, std_num]  # did발급 명령어
+            try:
+                # 명령어 인자로 하여 Popen 실행
+                process = Popen(command, stdout=PIPE, stderr=PIPE)
+                process.wait()  # did 재발급까지 대기
+                with open('../../deploy/' + wallet_name + '_gen_did.json')as f:  # server로 복사된 did 열기
+                    json_data = json.load(f)  # json_data에 json으로 저장
+                    error = json_data['error']
+                    if error == 'Error':
+                        os.remove('/home/deploy/' + wallet_name +
+                                  '_gen_did.json')  # 생성된 파일 삭제
+                        return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
                     os.remove('/home/deploy/' + wallet_name +
                               '_gen_did.json')  # 생성된 파일 삭제
-                    return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
-                os.remove('/home/deploy/' + wallet_name +
-                          '_gen_did.json')  # 생성된 파일 삭제
-                did = json_data['did']  # Did 저장
-                cmp1 = str(did) + str(wallet_key)
-                did_time_hash = hashlib.sha256(
-                    cmp1.encode('utf-8')).hexdigest()
+                    did = json_data['did']  # Did 저장
+                    cmp1 = str(did) + str(wallet_key)
+                    did_time_hash = hashlib.sha256(
+                        cmp1.encode('utf-8')).hexdigest()
 
-                data = {'email': '', 'info_hash': '', 'user_key': '',
-                        'wallet_id': '',  'did': '', 'did_time_hash': ''}
-                data['email'] = email
-                data['info_hash'] = info_hash
-                data['user_key'] = user_key
-                data['wallet_id'] = wallet_name
-                data['did'] = did
-                data['did_time_hash'] = did_time_hash
 
-                serializer = MemberSerializer(data=data)
+                    position = request.GET.get('position', None) # 관리자 인지 여부 추출
+                    if position == 'admin':    # 관리자 회원가입 이라면,
+                        data = {'email': '', 'info_hash': '', 'user_key': '',
+                                'wallet_id': '',  'did': '', 'did_time_hash': '', 'position': ''}
+                        data['email'] = email
+                        data['info_hash'] = info_hash
+                        data['user_key'] = user_key
+                        data['wallet_id'] = wallet_name
+                        data['did'] = did
+                        data['did_time_hash'] = did_time_hash
+                        data['position'] = position
 
-                if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
-                    serializer.save()
-                    return JsonResponse({'did': did, 'error': error}, status=201)
+                    else:                     # 일반 사용자 회원 가입이라면
+                        data = {'email': '', 'info_hash': '', 'user_key': '',
+                                'wallet_id': '',  'did': '', 'did_time_hash': ''}
+                        data['email'] = email
+                        data['info_hash'] = info_hash
+                        data['user_key'] = user_key
+                        data['wallet_id'] = wallet_name
+                        data['did'] = did
+                        data['did_time_hash'] = did_time_hash
 
-        except Exception as e:
-            return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+                    serializer = MemberSerializer(data=data)
+
+                    if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
+                        serializer.save()
+                        return JsonResponse({'did': did, 'error': error}, status=201)
+
+            except Exception as e:
+                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+
+        else:
+            return JsonResponse({'msg': 'kgu DB info is not exists'}, status=400)
+
 
 
 # 간편 비밀번호 저장(POST) 및 찾기(GET)
@@ -307,11 +346,9 @@ def findmyinfo(request):
         check_tempkey(request, hashlib.sha256(temp_key.encode()))
         std_num = request.GET.get('std_num', None)
         major = request.GET.get('major', None)
-        name = request.GET.get('name', None)
         email = request.GET.get('email', None)
 
-        info_dump = str(std_num) + str(major) + str(name) + \
-            str(email)  # 전달 받은 학번,전공,이름,이메일 concat
+        info_dump = str(std_num) + str(major) + str(email)  # 전달 받은 학번,전공,이메일 concat
         info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()  # 해쉬
         student_db = Member.objects.all()
 
@@ -320,6 +357,9 @@ def findmyinfo(request):
             # 제대로된 정보 입력했는지 확인
             if student_db.filter(info_hash=info_hash).exists():
                 std = Member.objects.get(info_hash=info_hash)  # 해당 학생 정보 저장
+                if std.position == 'admin':   # 만약 해당 멤버가 관리자라면,
+                    return JsonResponse({'admin_key' : hashlib.sha256(admin_key.encode()).hexdigest(),
+                                'user_key': std.user_key}, status=201)    # user_key와 admin_key값 반환
                 return JsonResponse({'user_key': std.user_key}, status=201)
             else:
                 return JsonResponse({'msg': '잘못된 정보를 입력하였습니다.'}, status=400)
@@ -370,7 +410,7 @@ def generate_entry(request):
         api_key = request.GET.get('key', None)  # key 추출
 
         if check_db(api_key):
-            student = Member.objects.get(user_key=api_key)
+            student = Member.objects.get(user_key=api_key) # 전달 받은 key에 해당하는 튜플 추출
 
             wallet_name = student.wallet_id  # wallet_name 생성
             wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
@@ -407,6 +447,7 @@ def generate_entry(request):
                             entry_did = json_data['entry_did']
                             entry_time = json_data['entry_time']
 
+                            # 출입 정보 JSON 형태로 저장
                             data = {'entry_date': '', 'building_num': '',
                                     'entry_did': '', 'entry_time': ''}
                             data['entry_date'] = entry_date
@@ -417,7 +458,7 @@ def generate_entry(request):
                             serializer = EntrySerializer(data=data)
 
                             if serializer.is_valid():  # 입력 data들 포맷 일치 여부 확인
-                                serializer.save()
+                                serializer.save()      # data의 포맷이 일치한다면, DB에 저장
 
                         return JsonResponse({'msg': 'generate entry complete'}, status=201)
                     except Exception as e:
@@ -443,16 +484,17 @@ def entry_list(request):
 
         api_key = request.GET.get('key', None)  # key 추출
 
-        if check_db(api_key):
+        if check_db(api_key): # 전달 받은 key가 DB에 존재 한다면,
             entry_did = request.GET.get('entry_did', None)
             entry_db = Entry.objects.filter(entry_did=entry_did)
 
-            if len(entry_db) == 0:
+            if len(entry_db) == 0: # 전달 받은 출입 did가 출입한 기록이 없다면,
                 return JsonResponse({'msg': 'has no entry'}, status=400)
 
             json_data = {}
             json_data['entry'] = []
 
+            # JSON 형태로 출입 정보 저장
             for i in range(0, len(entry_db), 1):
                 entry_data = {}
                 entry_data['entry_date'] = entry_db[i].entry_date
@@ -462,8 +504,8 @@ def entry_list(request):
 
                 json_data['entry'].append(entry_data)
 
-            return JsonResponse(json_data, status=201)
-        else:
+            return JsonResponse(json_data, status=201)  # 저장한 출입 정보 반환
+        else:  # 전달 받은 key가 DB에 존재 하지 않는다면,
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
 
@@ -472,48 +514,63 @@ def entry_list(request):
 def entry_admin(request):
     if request.method == 'GET':
         if not 'building_num' in request.GET:
-            return JsonResponse({'msg': 'parmas error'}, status=400)
+            return JsonResponse({'msg': 'params error'}, status=400)
         if not 'page_num' in request.GET:
-            return JsonResponse({'msg': 'parmas error'}, status=400)
+            return JsonResponse({'msg': 'params error'}, status=400)
         if not 'order' in request.GET:
-            return JsonResponse({'msg': 'parmas error'}, status=400)
+            return JsonResponse({'msg': 'params error'}, status=400)
+        if not 'admin_did' in request.GET:
+            return JsonResponse({'msg': 'params error'}, status=400)
 
-        order_by = request.GET.get('order', None)  # 오름차순, 내림차순 params GET
-        building_num = request.GET.get('building_num', None)  # 강의동 번호 GET
-
-        # 정렬 방식에 따라 DB 튜플 불러오기
-        if order_by == 'Asc':
-            entry_db = Entry.objects.filter(
-                building_num=building_num).order_by('id')
-        elif order_by == 'Desc':
-            entry_db = Entry.objects.filter(
-                building_num=building_num).order_by('-id')
+        admin_did = request.GET.get('admin_did', None)
+        student_db = Member.objects.all()  # Member 테이블에 저장된 모든 튜플 추출
+        if student_db.filter(did=admin_did).exists():  # 전달받은 admin_did가 존재한다면,
+            member_db = Member.objects.filter(did=admin_did)  # 전달 받은 did에 해당하는 튜플 추출
+            position = member_db[0].position    # 해당 튜플의 position 추출
         else:
-            return JsonResponse({'msg': 'order param error'}, status=400)
+            return JsonResponse({'msg': 'did not exists'}, status=400)
 
-        if len(entry_db) == 0:
-            return JsonResponse({'msg': 'has no entry'}, status=400)
+        if position == 'admin':    # 해당 Member가 관리자라면,
+            order_by = request.GET.get('order', None)  # 오름차순, 내림차순 params GET
+            building_num = request.GET.get('building_num', None)  # 강의동 번호 GET
 
-        # 페이지네이션 적용
-        page_num = request.GET.get('page_num', None)
-        paginator = Paginator(entry_db, 10)
-        total_page = paginator.num_pages
-        total_count = paginator.count
-        posts_entry = paginator.get_page(page_num)
+            # 정렬 방식에 따라 DB 튜플 불러오기
+            if order_by == 'Asc': # 오름차순 이라면,
+                entry_db = Entry.objects.filter(
+                    building_num=building_num).order_by('id')
+            elif order_by == 'Desc':  # 내림차순 이라면,
+                entry_db = Entry.objects.filter(
+                    building_num=building_num).order_by('-id')
+            else:
+                return JsonResponse({'msg': 'order param error'}, status=400)
 
-        # JSON 형태로 만들고, Response
-        json_data = {'entry': '', 'total_page': '', 'total_count': total_count}
-        json_data['entry'] = []
-        json_data['total_page'] = total_page
-        json_data['total_count'] = total_count
+            if len(entry_db) == 0:  # 해당 건물 번호, 해당 페이지에 출입기록이 존재하지 않는다면,
+                return JsonResponse({'msg': 'has no entry'}, status=400)
 
-        for i in range(0, len(posts_entry), 1):
-            entry_data = {}
-            entry_data['entry_date'] = posts_entry[i].entry_date
-            entry_data['building_num'] = posts_entry[i].building_num
-            entry_data['entry_did'] = posts_entry[i].entry_did
-            entry_data['entry_time'] = posts_entry[i].entry_time
+            # 페이지네이션 적용
+            page_num = request.GET.get('page_num', None) # 페이지 번호 추출
+            paginator = Paginator(entry_db, 10)
+            total_page = paginator.num_pages
+            total_count = paginator.count
+            posts_entry = paginator.get_page(page_num)  # 페이지 번호에 해당하는 정보 추출
 
-            json_data['entry'].append(entry_data)
+            # JSON 형태로 만들고, Response
+            json_data = {'entry': '', 'total_page': '', 'total_count': total_count}
+            json_data['entry'] = []
+            json_data['total_page'] = total_page
+            json_data['total_count'] = total_count
 
-        return JsonResponse(json_data, status=201)
+            # 해당 페이지에 해당하는 정보 JSON형태로 저장
+            for i in range(0, len(posts_entry), 1):
+                entry_data = {}
+                entry_data['entry_date'] = posts_entry[i].entry_date
+                entry_data['building_num'] = posts_entry[i].building_num
+                entry_data['entry_did'] = posts_entry[i].entry_did
+                entry_data['entry_time'] = posts_entry[i].entry_time
+
+                json_data['entry'].append(entry_data)
+
+            return JsonResponse(json_data, status=201)  # 저장한 페이지 정보 반환
+
+        else:    # 해당 Member가 관리자가 아니라면,
+            return JsonResponse({'msg': 'Not Admin'}, status=400)
