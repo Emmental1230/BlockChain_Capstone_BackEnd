@@ -121,18 +121,23 @@ def member_list(request):
             return JsonResponse({'msg': 'Email is already exists'}, status=400)
 
         # info_dump에 전달 받은 정보 concat
-        info_dump = str(std_num) + str(major) + str(name) + str(email)
+        info_dump = str(std_num) + str(major) + str(email)
+        info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
 
-        # user_key 해시 하는 부분
-        salt = base62.encodebytes(os.urandom(16))
-        salt = bytes(salt, encoding="utf-8")
+        kgu_db = Kguinfo.objects.all()
+        if kgu_db.filter(info_hash=info_hash).exists():   # Kguinfo DB에 info_hash값이 존재한다면,
+            # user_key 해시 하는 부분
+            salt = base62.encodebytes(os.urandom(16))
+            salt = bytes(salt, encoding="utf-8")
 
-        email_dump = info_dump + str(salt)
-        user_key = hashlib.sha256(email_dump.encode('utf-8')).hexdigest()
-        user_key_json = {'user_key': ''}
-        user_key_json['user_key'] = user_key
+            email_dump = info_dump + str(name) + str(salt)
+            user_key = hashlib.sha256(email_dump.encode('utf-8')).hexdigest()  # user_key 해쉬
+            user_key_json = {'user_key': ''}
+            user_key_json['user_key'] = user_key
 
-        return JsonResponse(user_key_json, status=201)
+            return JsonResponse(user_key_json, status=201)   # user_key 값 반환
+        else:
+            return JsonResponse({'msg': 'Kgu DB info is not exists'}, status=400)
 
     # 회원가입  요청 +  did 발급
     if request.method == 'POST':
@@ -148,8 +153,8 @@ def member_list(request):
         major = request.GET.get('major', None)
         info_dump = str(std_num) + str(major) + str(email)  # 학번+ 학과 + 이메일
         info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()
-
         time_stamp = int(time.time())  # 타임스탬프
+
         # wallet_name (이메일 + timestamp) 생성
         wallet_name = hashlib.sha256(
             (email + str(time_stamp)).encode()).hexdigest()
