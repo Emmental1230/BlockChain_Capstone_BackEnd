@@ -26,17 +26,6 @@ temp_key = "이팔청춘의 U-PASS"  # tmpkey 선언
 admin_key = "이팔청춘의 관리자"  # adminkey 선언
 
 
-@csrf_exempt
-# 사용자 임시키 검증
-def check_tempkey(request, compare_key):
-    if not 'key' in request.GET:
-        return JsonResponse({'msg': 'parmas error'}, status=400)
-
-    api_key = request.GET.get('key', None)
-
-    if api_key != compare_key:
-        return JsonResponse({'msg': 'Key is error'}, status=400)
-
 
 # 관리자 임시키 검증
 @csrf_exempt
@@ -111,6 +100,13 @@ def auth_key(request):
 def member_list(request):
     # 키 발급
     if request.method == 'GET':
+        if not 'key' in request.GET:  # key를 파라미터로 주지 않는다면,
+            return JsonResponse({'msg': 'params error'}, status=400)
+
+        api_key = request.GET.get('key', None)   # key 파라미터 추출
+        if api_key != hashlib.sha256(temp_key.encode()).hexdigest(): # key 파라미터가 올바르지 않으면,
+            return JsonResponse({'msg': 'key params error'}, status=400)
+
         student_db = Member.objects.all()
         std_num = request.GET.get('std_num', None)
         major = request.GET.get('major', None)
@@ -343,13 +339,18 @@ def get_did(request):
 @csrf_exempt
 def findmyinfo(request):
     if request.method == 'GET':
-        check_tempkey(request, hashlib.sha256(temp_key.encode()))
+        if not 'key' in request.GET:  # key를 파라미터로 주지 않는다면,
+            return JsonResponse({'msg': 'params error'}, status=400)
+
+        api_key = request.GET.get('key', None)   # key 파라미터 추출
+        if api_key != hashlib.sha256(temp_key.encode()).hexdigest(): # key 파라미터가 올바르지 않으면,
+            return JsonResponse({'msg': 'key params error'}, status=400)
+
         std_num = request.GET.get('std_num', None)
         major = request.GET.get('major', None)
         email = request.GET.get('email', None)
 
-        info_dump = str(std_num) + str(major) + \
-            str(email)  # 전달 받은 학번,전공,이메일 concat
+        info_dump = str(std_num) + str(major) + str(email)  # 전달 받은 학번,전공,이메일 concat
         info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()  # 해쉬
         student_db = Member.objects.all()
 
