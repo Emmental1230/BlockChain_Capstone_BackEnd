@@ -23,7 +23,7 @@ container_id = "a3a5e0ee8b91"  # container_id 선언
 temp_key = "이팔청춘의 U-PASS"  # tmpkey 선언
 admin_key = "이팔청춘의 관리자"  # adminkey 선언
 master_did = "HHy8vS8zkfbQXwuAZQmBoV"
-container_id_list = [None, '4d2c5ca4e19e', 'fbb87668b808', '227a7df0fd95', 'eeed7d61b14f', '4b949a1e4c5b', '8c0631402c81']
+container_id_list = [None, '4d2c5ca4e19e', 'dfdbb4abf23f', '3312fbe95203', 'bed25d0b5f45', '5d59ba08653d']
 
 
 # 관리자 임시키 검증
@@ -80,7 +80,7 @@ def check_container_id():
      container_num = 1
      for i in range(1, len(container_id_list), 1):
          member_db_con_count = Member.objects.filter(container_id=container_id_list[i]).count() # 
-         if member_db_con_count == 10:  # 해당 container id로 가입된 회원이 10명이라면,
+         if member_db_con_count == 3:  # 해당 container id로 가입된 회원이 10명이라면,
              container_num = container_num + 1   # 다음 container id 인덱스 번호 지정
 
      return container_num
@@ -291,8 +291,8 @@ def regenerate_did(request):
             std_num = request.GET.get('std_num', None)  # 학번 params 가져오기
 
             # DB에 wallet_name 저장 필요
-            container_num = check_container_id() # container_id_list 인덱스 번호 추출
-            command = ["sh", "../indy/start_docker/sh_regenerate_did.sh", container_id_list[container_num],
+            container_id = student.container_id
+            command = ["sh", "../indy/start_docker/sh_regenerate_did.sh", container_id,
                        did, std_num, email, new_wallet_name, wallet_key]  # did 재발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
@@ -332,9 +332,9 @@ def get_did(request):
             wallet_name = student.wallet_id  # wallet_name 디비에서 찾아오기
             wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
 
-            container_num = check_container_id() # container_id_list 인덱스 번호 추출
+            container_id = student.container_id
             command = ["sh", "../indy/start_docker/sh_get_did.sh",
-                       container_id_list[container_num], wallet_name, wallet_key]
+                       container_id, wallet_name, wallet_key]
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -372,9 +372,10 @@ def findmyinfo(request):
         if student_db.filter(email=email).exists():  # params로 전달받은 이메일이 DB에 존재하는지 확인
             info_dump = str(std_num) + str(major) + str(email)  # 전달 받은 학번,전공,이메일 concat
             info_hash = hashlib.sha256(info_dump.encode('utf-8')).hexdigest()  # 해쉬
-            container_num = check_container_id() # container_id_list 인덱스 번호 추출
+            student = Member.objects.get(email=email)
+            container_id = student.container_id
             command = ["sh", "../indy/start_docker/sh_check_attrib.sh",
-                   container_id_list[container_num], master_did, info_hash, std_num]  # did발급 명령어
+                   container_id, master_did, info_hash, std_num]  # did발급 명령어
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -386,7 +387,7 @@ def findmyinfo(request):
                         os.remove('/home/deploy/' + std_num + '_check_attrib.json')  # 생성된 파일 삭제
                         return JsonResponse({'msg': 'user info is not exists in blockchain'}, status=400)
                     os.remove('/home/deploy/' + std_num + '_check_attrib.json')  # 생성된 파일 삭제
-                    std = student_db.get(info_hash=info_hash)
+                    std = student_db.get(email=email)
                     if std.position == 'admin':   # 만약 해당 멤버가 관리자라면,
                         return JsonResponse({'admin_key': hashlib.sha256(admin_key.encode()).hexdigest(),'user_key': std.user_key}, status=201)    # user_key와 admin_key값 반환
                     else:
@@ -424,9 +425,10 @@ def get_entry(request):
             year = request.GET.get('year', None)  # 연도
             month = request.GET.get('month', None)  # 월
 
-            container_num = check_container_id() # container_id_list 인덱스 번호 추출
+            student = Member.objects.get(user_key=api_key)
+            container_id = student.container_id
             command = ["sh", "../indy/start_docker/sh_get_attrib.sh",
-                       container_id_list[container_num], did, year, month]
+                       container_id, did, year, month]
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
@@ -454,8 +456,7 @@ def generate_entry(request):
         api_key = request.GET.get('key', None)  # key 추출
 
         if check_db(api_key):
-            student = Member.objects.get(
-                user_key=api_key)  # 전달 받은 key에 해당하는 튜플 추출
+            student = Member.objects.get(user_key=api_key)  # 전달 받은 key에 해당하는 튜플 추출
 
             wallet_name = student.wallet_id  # wallet_name 생성
             wallet_key = request.GET.get('simple_password', None)  # 간편 pwd 추출
@@ -470,9 +471,9 @@ def generate_entry(request):
 
             if check_timestamp(time_stamp):  # timestamp 유효범위 검증
                 if check_did(std_did, time_stamp, hashed_data):  # qr 정보 검증
-                    container_num = check_container_id()  # container_id_list index번호 추출
+                    container_id = student.container_id
                     command = ["sh", "../indy/start_docker/sh_generate_attrib.sh",
-                               container_id_list[container_num], wallet_name, wallet_key, 
+                               container_id, wallet_name, wallet_key, 
                                admin_did, std_did, building_num, year, month, day]
                     try:
                         # 명령어 인자로 하여 Popen 실행
