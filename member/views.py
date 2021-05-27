@@ -435,22 +435,23 @@ def get_entry(request):
         api_key = request.GET.get('key', None)  # key 추출
 
         if check_db(api_key):
-            did = request.GET.get('did', None)  # user did
+            user_did = request.GET.get('did', None)  # user did
+            admin_did = request.GET.get('admin_did', None)
             year = request.GET.get('year', None)  # 연도
             month = request.GET.get('month', None)  # 월
 
             student = Member.objects.get(user_key=api_key)
             container_id = student.container_id
             command = ["sh", "../indy/start_docker/sh_get_attrib.sh",
-                       container_id, did, year, month]
+                       container_id, admin_did, user_did, year, month]
             try:
                 # 명령어 인자로 하여 Popen 실행
                 process = Popen(command, stdout=PIPE, stderr=PIPE)
                 process.wait()  # did 발급까지 대기
 
-                with open('/home/deploy/' + did + '_attrib.json')as f:  # server로 복사된 did 열기
+                with open('/home/deploy/' + user_did + '_attrib.json')as f:  # server로 복사된 did 열기
                     json_data = json.load(f)  # json_data에 json으로 저장
-                    os.remove('/home/deploy/' + did + '_attrib.json')  # 생성된 파일 삭제
+                    #os.remove('/home/deploy/' + did + '_attrib.json')  # 생성된 파일 삭제
                     if json_data['error'] == 'Error':
                         return JsonResponse({'msg': '출입한 내역이 없습니다.'}, status=400)
             except Exception as e:
