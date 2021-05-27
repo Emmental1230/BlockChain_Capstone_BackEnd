@@ -93,11 +93,25 @@ def check_container_id():
 def auth_key(request):
     if request.method == 'GET':
         key = request.GET.get('key', None)
+
         student_db = Member.objects.all()
         if student_db.filter(user_key=key).exists():
-            return JsonResponse({'msg': 'This is the correct key'}, status=201)
+            student = Member.objects.filter(user_key=key)
+            position = student[0].position
+
+            if position == 'admin':
+                ad_key = request.GET.get('admin_key', None)
+                compare_key = hashlib.sha256(admin_key.encode()).hexdigest()
+                if ad_key == compare_key:
+                    return JsonResponse({'msg': 'Admin key success'}, status=201)
+                elif ad_key != compare_key:
+                    return JsonResponse({'msg': 'key is error'}, status=400)
+
+            else:
+                return JsonResponse({'msg': 'This is the correct key'}, status=201)
+                
         else:
-            return JsonResponse({'msg': 'Invalid key'}, status=400)
+            return JsonResponse({'msg': 'Key is error'}, status=400)
 
 
 # 회원 키 GET 및 회원 가입 POST
