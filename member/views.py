@@ -147,7 +147,7 @@ def member_list(request):
 
                 return JsonResponse(user_key_json, status=201)   # user_key 값 반환
         except Exception as e:
-            return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+            return JsonResponse({'msg': 'failed_Exception', 'error': str(e)}, status=400)
             
 
     # 회원가입  요청 +  did 발급
