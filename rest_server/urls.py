@@ -42,5 +42,4 @@ urlpatterns = [
     path('api/generateentry/', views.generate_entry),  # 출입 여부 등록 (tx 발생)
     path('api/entry/', views.entry_list),   # 학생용. 개인 출입 list 조회
     path('api/entryadmin/', views.entry_admin), # 관리자용. 특정 강의동 출입 인원 list 조회
-    path('api/admincheck/', views.check_adminkey),  # 관리자 임시키 올바른지 검증
 ]
