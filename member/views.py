@@ -326,7 +326,6 @@ def get_did(request):
                     json_data = json.load(f)  # json_data에 json으로 저장
                     os.remove('/home/deploy/' + wallet_name + '_student_did.json')  # 생성된 파일 삭제
                     if json_data['error'] == 'Error': # 생성된 Json파일의 error키 값이 Error이라면,
-                        os.remove('/home/deploy/' + wallet_name + '_student_did.json')  # 생성된 파일 삭제
                         return JsonResponse({'msg': 'DID not found'}, status=400)
             except Exception as e: # 예외 처리
                 return JsonResponse({'msg': 'failed_Exception', 'error': str(e)}, status=400)
