@@ -21,8 +21,8 @@ from asgiref.sync import sync_to_async
 
 temp_key = "이팔청춘의 U-PASS"  # tmpkey 선언
 admin_key = "이팔청춘의 관리자"  # adminkey 선언
-master_did = "HHy8vS8zkfbQXwuAZQmBoV"
-container_id_list = [None, '4d2c5ca4e19e', 'dfdbb4abf23f', '3312fbe95203', 'bed25d0b5f45', '5d59ba08653d']
+master_did = "HHy8vS8zkfbQXwuAZQmBoV"  # 마스터 DID
+container_id_list = [None, '4d2c5ca4e19e', 'dfdbb4abf23f', '3312fbe95203', 'bed25d0b5f45', '5d59ba08653d'] # 생성한 컨테이너 id 리스트
 
 
 # Key가 DB에 존재하는지 확인
@@ -177,7 +177,7 @@ def member_list(request):
                 error = json_data['error']
                 if error == 'Error':  # 생성된 json파일의 error 키 값이 Error 이라면,
                     os.remove('/home/deploy/' + wallet_name + '_gen_did.json')  # 생성된 파일 삭제
-                    return JsonResponse({'msg': 'DID 발급 오류'}, status=400)
+                    return JsonResponse({'msg': 'DID generate error'}, status=400)
                 os.remove('/home/deploy/' + wallet_name + '_gen_did.json')  # 생성된 파일 삭제
                 did = json_data['did']  # Did 저장
                 cmp1 = str(did) + str(wallet_key)
@@ -212,7 +212,7 @@ def member_list(request):
                     return JsonResponse({'did': did, 'error': error}, status=201)
 
         except Exception as e:  # 예외 처리
-            return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+            return JsonResponse({'msg': 'failed_Exception', 'error': str(e)}, status=400)
 
 
 # 간편 비밀번호 저장(POST) 및 찾기(GET)
@@ -288,16 +288,15 @@ def regenerate_did(request):
                     # 에러 추가
                     if json_data['error'] == 'Error': # 생성된 JSON파일의 error키 값이 Error이라면,
                         os.remove('/home/deploy/' + str(std_num) + 'NewWalletID.json')  # 생성된 파일 삭제
-                        return JsonResponse({'msg': 'DID 재발급 오류'}, status=400)
+                        return JsonResponse({'msg': 'DID regenerate error'}, status=400)
                     new_wallet_name = json_data['new_wallet']
                     student.wallet_id = new_wallet_name  # 새로운 wallet_name 저장
                     cmp1 = str(student.did) + str(wallet_key)
                     student.did_time_hash = hashlib.sha256(cmp1.encode('utf-8')).hexdigest()
                     student.save()
-                    os.remove('/home/deploy/' + str(std_num) +
-                              'NewWalletID.json')  # 생성된 파일 삭제
+                    os.remove('/home/deploy/' + str(std_num) + 'NewWalletID.json')  # 생성된 파일 삭제
             except Exception as e:     # 예외 처리
-                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+                return JsonResponse({'msg': 'failed_Exception', 'error': str(e)}, status=400)
         else: # 전달 받은 key값이 올바른 값이 아니라면,
             return JsonResponse({'msg': 'Key is error'}, status=400)
         return JsonResponse({'did': student.did, 'new_wallet_name': new_wallet_name, 'old_wallet_name': old_wallet_name}, status=201)
@@ -328,9 +327,9 @@ def get_did(request):
                     os.remove('/home/deploy/' + wallet_name + '_student_did.json')  # 생성된 파일 삭제
                     if json_data['error'] == 'Error': # 생성된 Json파일의 error키 값이 Error이라면,
                         os.remove('/home/deploy/' + wallet_name + '_student_did.json')  # 생성된 파일 삭제
-                        return JsonResponse({'msg': 'DID를 찾을 수 없습니다.'}, status=400)
+                        return JsonResponse({'msg': 'DID not found'}, status=400)
             except Exception as e: # 예외 처리
-                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+                return JsonResponse({'msg': 'failed_Exception', 'error': str(e)}, status=400)
         else:  # 전달 받은 key값이 올바른 키가 아니라면,
             return JsonResponse({'msg': 'Key is error'}, status=400)
         return JsonResponse(json_data, status=201) # 생성된 json 데이터 반환
@@ -376,9 +375,9 @@ def findmyinfo(request):
                     else:      # 만약 해당 멤버가 관리자가 아니라면,
                         return JsonResponse({'user_key': std.user_key}, status=201)
             except Exception as e:  # 예외 처리
-                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+                return JsonResponse({'msg': 'failed_Exception', 'error': str(e)}, status=400)
         else:  # 전달 받은 이메일이 Member 테이블에 존재하지 않는다면,
-            return JsonResponse({'msg': '가입되지 않은 email입니다.'}, status=400)
+            return JsonResponse({'msg': 'not join email'}, status=400)
         
 
 
@@ -409,9 +408,9 @@ def get_entry(request):
                     json_data = json.load(f)  # json_data에 json으로 저장
                     os.remove('/home/deploy/' + did + '_attrib.json')  # 생성된 파일 삭제
                     if json_data['error'] == 'Error':  # 생성된 Json파일의 error키 값이 Error이라면,
-                        return JsonResponse({'msg': '출입한 내역이 없습니다.'}, status=400)
+                        return JsonResponse({'msg': 'not entry'}, status=400)
             except Exception as e: # 예외처리
-                return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+                return JsonResponse({'msg': 'failed_Exception', 'error': str(e)}, status=400)
         else:  # 전달 받은 key값이 올바른 값이 아니라면,
             return JsonResponse({'msg': 'Key is error'}, status=400)
 
@@ -478,7 +477,7 @@ def generate_entry(request):
 
                         return JsonResponse({'msg': 'generate entry complete'}, status=201)
                     except Exception as e:   # 예외 처리
-                        return JsonResponse({'msg': 'failed_Exception', 'error 내용': str(e)}, status=400)
+                        return JsonResponse({'msg': 'failed_Exception', 'error': str(e)}, status=400)
                 else:  # qr 정보 검증이 실패했다면,
                     temp_admindid = str(student.did_time_hash) + str(time_stamp)
                     return JsonResponse({'msg': 'check_DID error', 'studentDidhash': hashed_data, 'adminDidhash': hashlib.sha256(temp_admindid.encode('utf-8')).hexdigest()}, status=400)
