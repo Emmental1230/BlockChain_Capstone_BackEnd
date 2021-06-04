@@ -20,7 +20,7 @@ from asgiref.sync import async_to_sync
 from asgiref.sync import sync_to_async
 
 temp_key = "이팔청춘의 U-PASS"  # tmpkey 선언
-admin_key = "이팔청춘의 관리자"  # adminkey 선언
+admin_key = "admin"  # adminkey 선언
 master_did = "HHy8vS8zkfbQXwuAZQmBoV"  # 마스터 DID
 container_id_list = [None, '4d2c5ca4e19e', 'dfdbb4abf23f', '3312fbe95203', 'bed25d0b5f45', '5d59ba08653d'] # 생성한 컨테이너 id 리스트
 
@@ -65,10 +65,23 @@ def check_container_id():
          member_db_con_count = Member.objects.filter(container_id=container_id_list[i]).count() # 컨테이너별 가입된 회원 수 반환
          if member_db_con_count == 10:  # 해당 container id로 가입된 회원이 10명이라면,
              container_num = container_num + 1   # 다음 container id 인덱스 번호 지정
-
      return container_num # container 리스트의 인덱스 번호 반환
 
 
+# 관리자 임시키 검증
+@csrf_exempt
+def check_adminkey(request):
+    if request.method == 'GET':
+        if not 'key' in request.GET:
+            return JsonResponse({'msg': 'parmas error'}, status=400)
+
+        ad_key = request.GET.get('key', None)     # params로 전달 받은 관리자 임시 키
+        compare_key = hashlib.sha256(admin_key.encode()).hexdigest()  # 올바른 관리자 임시 키
+
+        if ad_key == compare_key:
+            return JsonResponse({'msg': 'Admin key success'}, status=201)
+        elif ad_key != compare_key:
+            return JsonResponse({'msg': 'Key is error'}, status=400)
 
 
 # 올바른 키인지 체크
